@@ -202,6 +202,8 @@ jobs:
         arch: [386, amd64, arm, arm64, riscv64]
         exclude:
           - os: windows
+            arch: arm
+          - os: windows
             arch: riscv64
           - os: darwin
             arch: 386
