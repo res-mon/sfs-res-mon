@@ -1,4 +1,4 @@
-# Simple Frontend Stack 🌱⚡💻
+# ResMon: Resource Monitor 🕰️📊⚡
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](LICENSE.md)
 ![CI/CD](https://github.com/yerTools/simple-frontend-stack/actions/workflows/cicd.yml/badge.svg)
@@ -6,15 +6,16 @@
 
 ## TL;DR ⚡️
 
-A **simple, lightweight frontend stack** for quickly building web apps or SPAs.  
-Powered by **SolidJS** 💎, **TailwindCSS** 🎨 & **DaisyUI** 🌼 for styling, with a rich ecosystem of libraries for everything from icon support to state management.  
+**ResMon (Resource Monitor)** is a comprehensive work time and resource tracking application built on the **Simple Frontend Stack**.  
+Powered by **SolidJS** 💎, **TailwindCSS** 🎨 & **DaisyUI** 🌼 for styling, with a rich ecosystem of libraries for managing time, projects, and resources.  
 Runs on **Bun** 🚀 and **Vite** ⚡️ for an ultra-fast development workflow.  
-Want to see it in action? Check out the live demo at [simple-frontend-stack.ltl.re](https://simple-frontend-stack.ltl.re/).
+Check out the live app at [ResMon.de](https://resmon.de/)
 
 ## Table of Contents 📑
 
 - [Core Stack ⚙️](#core-stack-️)
 - [Overview 🌟](#overview-)
+- [What is ResMon? 🕰️📊](#what-is-resmon-)
 - [Key Features ✨](#key-features-)
 - [Quick Start Guide 🚀](#quick-start-guide-)
 - [Included Frameworks & Libraries 📚](#included-frameworks--libraries-)
@@ -53,6 +54,39 @@ With PocketBase, you can easily construct a full-stack application complete with
 The idea is to leverage **standardized languages, libraries, tools, and frameworks** to lower the entry barrier—even for developers with limited IT background.  
 While languages like Elm or Gleam might offer superior type-safety for complex applications, PocketBase (written in Go) strikes a balance for a powerful yet simple backend solution.  
 Combined with TypeScript, SolidJS, and a vibrant ecosystem of libraries, you'll have a practical and maintainable environment for rapid development.
+
+## What is ResMon? 🕰️📊
+
+ResMon stands for **Res**ource **Mon**itor - a comprehensive tool for tracking your most valuable resources, especially **time**.
+
+### Origin and Purpose 🌱
+
+The genesis of ResMon occurred during a university project, highlighting the need for a straightforward work time tracking tool. For freelancers and those with side projects, having a simple way to measure time expenditure is invaluable.
+
+### Vision and Features 🔭
+
+ResMon aims to be more than just a time tracker:
+
+- **Project Management** - Track time across different projects
+- **Task Organization** - Break down projects into parts, sub-parts, and tasks
+- **Tagging System** - Label tasks with categories like `Architecture`, `Frontend`, `Backend`
+- **Notes and Ratings** - Add context to tasks and rate satisfaction levels
+- **Tool Investment Tracking** - Calculate ROI on tools you develop to streamline workflows
+- **Invoice Generation** - Streamline client billing based on tracked time
+- **Administrative Cost Tracking** - Account for indirect costs to be properly billed
+- **Expense Management** - Record project-related expenses like travel or equipment
+- **Resource Analysis** - Evaluate profitability of hardware and tool investments
+- **Work Pattern Insights** - Review recent patterns, earnings, and rates
+
+### Philosophy 💡
+
+Don't squander your resources, especially the most precious one: **time**. Keep track of them with **ResMon**.
+
+The application is designed to autonomously track your activities, expenses, and achievements—privately and transparently. By simplifying the tracking of your endeavors and finances, ResMon enables you to ascertain the value of your time and investments.
+
+### Current Status ⚠️
+
+This project is in early development. The latest version is running at [ResMon.de](https://resmon.de).
 
 ## Key Features ✨
 
