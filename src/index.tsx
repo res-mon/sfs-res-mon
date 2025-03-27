@@ -7,6 +7,7 @@ import TailwindIcon from "~icons/devicon/tailwindcss";
 import IconifyIcon from "~icons/line-md/iconify2-static";
 import DaisyUiIcon from "~icons/logos/daisyui-icon";
 import LucideIcon from "~icons/simple-icons/lucide";
+import ClockIcon from "~icons/tabler/clock";
 import CodeIcon from "~icons/tabler/code";
 
 import { Component, ComponentProps, For, JSX, lazy } from "solid-js";
@@ -36,6 +37,11 @@ export const pageTree = {
     title: "Hello World!",
     component: lazy(() => import("./pages/Index")),
     icon: WorldIcon,
+  },
+  "work-clock": {
+    title: "Work Clock",
+    component: lazy(() => import("./pages/WorkClock")),
+    icon: ClockIcon,
   },
   solid: {
     title: "SolidJS",

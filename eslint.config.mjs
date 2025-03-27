@@ -1,14 +1,14 @@
-import typescriptEslint from "@typescript-eslint/eslint-plugin";
-import prettier from "eslint-plugin-prettier";
-import _import from "eslint-plugin-import";
 import { fixupPluginRules } from "@eslint/compat";
-import globals from "globals";
+import { FlatCompat } from "@eslint/eslintrc";
+import js from "@eslint/js";
+import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import _import from "eslint-plugin-import";
+import prettier from "eslint-plugin-prettier";
+import solid from "eslint-plugin-solid";
+import globals from "globals";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
-import solid from "eslint-plugin-solid";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -131,23 +131,27 @@ export default [
   solid.configs["flat/typescript"],
   ...compat.extends("plugin:prettier/recommended"),
   {
-    "rules": {
+    rules: {
       "prettier/prettier": ["warn"],
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
-          "args": "all",
-          "argsIgnorePattern": "^_",
-          "caughtErrors": "all",
-          "caughtErrorsIgnorePattern": "^_",
-          "destructuredArrayIgnorePattern": "^_",
-          "varsIgnorePattern": "^_",
-          "ignoreRestSiblings": true,
+          args: "all",
+          argsIgnorePattern: "^_",
+          caughtErrors: "all",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
         },
       ],
-      "import/extensions": ["error", {
-        "": "never",
-      }],
+      "import/extensions": [
+        "error",
+        {
+          "": "never",
+        },
+      ],
+      "no-use-before-define": ["off"],
     },
   },
 ];
