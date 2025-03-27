@@ -15,7 +15,7 @@ Check out the live app at [ResMon.de](https://resmon.de/)
 
 - [Core Stack ⚙️](#core-stack-️)
 - [Overview 🌟](#overview-)
-- [What is ResMon? 🕰️📊](#what-is-resmon-)
+- [What is ResMon? 🕰️📊](#what-is-resmon-%EF%B8%8F)
 - [Key Features ✨](#key-features-)
 - [Quick Start Guide 🚀](#quick-start-guide-)
 - [Included Frameworks & Libraries 📚](#included-frameworks--libraries-)
