@@ -59,5 +59,5 @@ export interface WorkClockRecord extends RecordModel, WorkClockSchema {
  * @returns A typed PocketBase collection reference for work clock entries
  */
 export function workClock() {
-  return pb.collection<WorkClockRecord>("work_clock_entries");
+  return pb.collection<WorkClockRecord>("work_clock");
 }
