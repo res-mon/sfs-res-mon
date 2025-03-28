@@ -4,6 +4,9 @@
  * This migration establishes the foundational data structure for the work_clock collection
  * in PocketBase. It defines the schema for tracking time entries with timestamps and clock in/out status.
  *
+ * This schema was created using the following command:
+ * `go run . migrate create "initial schema"`
+ *
  * The migration includes:
  * 1. Creation of the work_clock collection
  * 2. Definition of field structures with appropriate validation rules
