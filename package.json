@@ -77,6 +77,7 @@
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "solid-ag-grid": "^0.0.230",
+    "solid-effect": "^1.0.0",
     "solid-highlight": "^0.1.26",
     "solid-markdown": "^2.0.14",
     "swapy": "^1.0.5",

@@ -45,6 +45,7 @@
         "prettier": "^3.5.3",
         "prettier-plugin-tailwindcss": "^0.6.11",
         "solid-ag-grid": "^0.0.230",
+        "solid-effect": "^1.0.0",
         "solid-highlight": "^0.1.26",
         "solid-markdown": "^2.0.14",
         "swapy": "^1.0.5",
@@ -1054,6 +1055,8 @@
     "simple-swizzle": ["simple-swizzle@0.2.2", "", { "dependencies": { "is-arrayish": "^0.3.1" } }, "sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg=="],
 
     "solid-ag-grid": ["solid-ag-grid@0.0.230", "", { "dependencies": { "ag-grid-community": "31.1.1" }, "peerDependencies": { "solid-js": ">=1.0.0" } }, "sha512-iIOZHjUHAXRJygZurT0YYwVaM8R81p3u90jdEurIOmYQDSFi/a9ziGuqalXW1eqZJdnLPddac/sp+TkVn1dYZw=="],
+
+    "solid-effect": ["solid-effect@1.0.0", "", { "peerDependencies": { "effect": "^3.8.4", "solid-js": "^1.9.3" } }, "sha512-64lwEpXgFmFiBguD5l4zB8evipxsU2F2Hxq4nXzpI10qUjEaO78uv/QpXiXIURtG8jIz0zhz21UHFRePcxpArg=="],
 
     "solid-highlight": ["solid-highlight@0.1.26", "", { "peerDependencies": { "prismjs": "^1.29.0", "solid-js": "^1.8.0" } }, "sha512-Iw1mi3vE+YCBBBU/+HHc5y8VNULaGXUX4OK2c9TbzegOGCitzW0uNIvb0s3S0KoVv7Uma/KadWHNFXkwZCwPgQ=="],
 
