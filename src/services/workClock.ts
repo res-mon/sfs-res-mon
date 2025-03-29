@@ -11,7 +11,11 @@ import { ClientResponseError } from "pocketbase";
 import { Effect, Schema, pipe } from "effect";
 import { ParseError } from "effect/ParseResult";
 
-import { workClock, workClockSchema } from "./pocketBase/collections";
+import {
+  WorkClockRecord,
+  workClock,
+  workClockSchema,
+} from "./pocketBase/collections";
 import {
   CreateRecordError,
   DateInvalidError,
@@ -46,13 +50,13 @@ export interface TimeStampEntry {
  * 1. Schema validation against the workClockSchema
  * 2. Conversion of string timestamp to a JavaScript Date object
  *
- * @param value - Unknown data to be parsed, typically a raw record from PocketBase
+ * @param {WorkClockRecord} value - Value to be parsed, typically a raw record from PocketBase
  * @returns An Effect that yields a validated TimeStampEntry with proper Date object,
  *          or fails with ParseError or DateInvalidFormatError
  * @private
  */
 function parseTimeStampEntry(
-  value: unknown,
+  value: WorkClockRecord,
 ): Effect.Effect<TimeStampEntry, ParseError | DateInvalidFormatError, never> {
   return pipe(
     Schema.validate(workClockSchema)(value),
@@ -278,6 +282,6 @@ export function addClockEntry(
         },
       });
     }),
-    parseTimeStampEntry,
+    Effect.flatMap((record) => parseTimeStampEntry(record)),
   );
 }
