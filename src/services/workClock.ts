@@ -201,6 +201,7 @@ export function getTimeEntries(
         try: () =>
           workClock().getFullList({
             sort: "-timestamp", // Sort by timestamp descending (newest first)
+            batch: 1000, // Batch 1000 records per request
             ...(filter ? { filter } : {}), // Only add the filter if it's not empty
           }),
         catch: (error) => {
