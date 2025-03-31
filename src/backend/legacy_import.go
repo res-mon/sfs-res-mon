@@ -39,7 +39,7 @@ func RegisterAPI(app *pocketbase.PocketBase) {
 		se.Router.POST("/api/legacy_import", func(e *core.RequestEvent) error {
 			return handlePost(app, e.Request, e.Response)
 		})
-		return nil
+		return se.Next()
 	})
 }
 

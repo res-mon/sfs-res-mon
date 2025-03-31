@@ -286,3 +286,99 @@ export function addClockEntry(
     Effect.flatMap((record) => parseTimeStampEntry(record)),
   );
 }
+
+/**
+ * Type definition for Legacy Import-related errors
+ */
+export interface LegacyImportError {
+  type: "legacyImport";
+  message: string;
+  innerError?: unknown;
+}
+
+/**
+ * Type definition for Legacy Import response
+ */
+export interface LegacyImportResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * Uploads a legacy database file for import into the work_clock collection
+ *
+ * This function takes a database file (usually .db SQLite file), uploads it to the
+ * backend's /api/legacy_import endpoint, which extracts activity logs and imports
+ * them into the PocketBase work_clock collection.
+ *
+ * @param file - The database file to upload (File or Blob)
+ * @returns An Effect that yields the server response on success, or fails with LegacyImportError
+ * @example
+ * // Upload a database file from a file input
+ * const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+ * const file = fileInput.files?.[0];
+ * if (file) {
+ *   const result = await Effect.runPromise(uploadLegacyDatabase(file));
+ *   console.log(result.message);
+ * }
+ */
+export function uploadLegacyDatabase(
+  file: File | Blob,
+): Effect.Effect<LegacyImportResponse, LegacyImportError> {
+  return Effect.tryPromise({
+    try: async () => {
+      // Create a FormData object and append the file
+      const formData = new FormData();
+      formData.append(
+        "database",
+        file,
+        file instanceof File ? file.name : "database.db",
+      );
+
+      // Send the request to the server
+      const response = await fetch("/api/legacy_import", {
+        method: "POST",
+        body: formData,
+      });
+
+      // Handle non-OK responses
+      if (!response.ok) {
+        let errorMessage = `Server returned ${response.status}: ${response.statusText}`;
+
+        try {
+          // Try to extract a more detailed error message from the response
+          const errorData = (await response.json()) as unknown;
+          if (typeof errorData === "string") {
+            errorMessage = errorData;
+          } else if (
+            typeof errorData === "object" &&
+            errorData != null &&
+            "message" in errorData &&
+            typeof errorData.message === "string"
+          ) {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // If we can't parse the JSON, just use the status text
+          errorMessage = response.statusText;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // Parse the successful response
+      return (await response.json()) as LegacyImportResponse;
+    },
+    catch: (error) => {
+      console.error("Error uploading legacy database:", error);
+      return {
+        type: "legacyImport",
+        message:
+          error instanceof Error ?
+            error.message
+          : "Failed to upload legacy database file",
+        innerError: error,
+      };
+    },
+  });
+}

@@ -24,6 +24,7 @@ import { format, formatDistance } from "date-fns";
 import { de } from "date-fns/locale";
 import { Effect, Schedule, pipe } from "effect";
 
+import LegacyImportPanel from "../components/LegacyImportPanel";
 import {
   TimeStampEntry,
   addClockEntry,
@@ -557,6 +558,11 @@ const WorkClock: Component = (): JSX.Element => {
             </Show>
           </div>
         </div>
+
+        {/* Legacy Import Section */}
+        <Show when={!isLoading()}>
+          <LegacyImportPanel />
+        </Show>
 
         {/* Time History Section */}
         <Show when={dailyRecords().length > 0}>
