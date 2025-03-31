@@ -126,10 +126,8 @@ func handlePost(app *pocketbase.PocketBase, req *http.Request, resp http.Respons
 
 	// Convert activity logs to JSON and return
 	respData := map[string]interface{}{
-		"success":      true,
-		"message":      "File uploaded and processed successfully",
-		"tempPath":     tempFilePath,
-		"activityLogs": activityLogs,
+		"success": true,
+		"message": "File uploaded and processed successfully",
 	}
 
 	jsonResp, err := json.Marshal(respData)
