@@ -1,10 +1,9 @@
 module github.com/yerTools/simple-frontend-stack
 
 go 1.24.1
-
 require (
-	github.com/pocketbase/pocketbase v0.26.4
-	modernc.org/sqlite v1.36.2
+	github.com/pocketbase/pocketbase v0.26.6
+	modernc.org/sqlite v1.36.3
 )
 
 require (
