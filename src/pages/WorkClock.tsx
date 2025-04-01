@@ -57,7 +57,10 @@ const WorkClock: Component = (): JSX.Element => {
         setIsLoading(false);
       })
       .catch((error) => {
-        console.error("Error loading time entries from PocketBase:", error);
+        console.error(
+          "Fehler beim Laden der Zeiteinträge aus PocketBase:",
+          error,
+        );
         setIsLoading(false);
       });
   });
@@ -112,11 +115,12 @@ const WorkClock: Component = (): JSX.Element => {
         {/* Header Section */}
         <div class="text-center">
           <h1 class="intersect:motion-preset-slide-in-from-left intersect-once mb-4 text-4xl font-bold">
-            <ClockIcon class="mr-2 inline-block" /> Work Clock
+            <ClockIcon class="mr-2 inline-block" /> Stempeluhr
           </h1>
           <p class="intersect:motion-preset-slide-in-from-right intersect-once mx-auto max-w-3xl text-lg">
-            Track your work time efficiently by clocking in and out. View your
-            daily time records and total work hours.
+            Verfolgen Sie Ihre Arbeitszeit effizient durch Ein- und Ausstempeln.
+            Sehen Sie Ihre täglichen Zeitaufzeichnungen und die gesamte
+            Arbeitszeit.
           </p>
         </div>
 

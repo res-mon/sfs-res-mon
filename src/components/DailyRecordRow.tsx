@@ -34,12 +34,12 @@ const DailyRecordRow: Component<DailyRecordRowProps> = (props) => {
         <td>{props.record.formattedTotal}</td>
         <td class="text-right">
           {props.record.entryPairs.length}{" "}
-          {props.record.entryPairs.length === 1 ? "entry" : "entries"}
+          {props.record.entryPairs.length === 1 ? "Eintrag" : "Einträge"}
           {/* Show indicator if any entries cross midnight */}
           {props.record.entryPairs.some((pair) => pair.dayBoundary) ?
             <span
               class="tooltip tooltip-left ml-2"
-              data-tip="Contains entries crossing midnight"
+              data-tip="Enthält Einträge über Mitternacht hinaus"
             >
               <CalendarPlusIcon class="text-accent inline-block" />
             </span>
@@ -48,7 +48,7 @@ const DailyRecordRow: Component<DailyRecordRowProps> = (props) => {
           {props.record.hasMissingEntries ?
             <span
               class="tooltip tooltip-left ml-2"
-              data-tip="Contains missing clock-in/out entries"
+              data-tip="Enthält fehlende Ein-/Ausstempel-Einträge"
             >
               <ClockIcon class="text-warning inline-block" />
             </span>
@@ -57,7 +57,7 @@ const DailyRecordRow: Component<DailyRecordRowProps> = (props) => {
           {props.record.isActive ?
             <span
               class="tooltip tooltip-left ml-2"
-              data-tip="Currently active session"
+              data-tip="Aktuell aktive Sitzung"
             >
               <ClockPlayIcon class="text-success inline-block" />
             </span>
@@ -75,13 +75,13 @@ const DailyRecordRow: Component<DailyRecordRowProps> = (props) => {
                 <thead>
                   <tr>
                     <th>
-                      <ClockIcon class="mr-1 inline-block" /> Clock In
+                      <ClockIcon class="mr-1 inline-block" /> Eingestempelt
                     </th>
                     <th>
-                      <ClockIcon class="mr-1 inline-block" /> Clock Out
+                      <ClockIcon class="mr-1 inline-block" /> Ausgestempelt
                     </th>
                     <th>
-                      <ClockIcon class="mr-1 inline-block" /> Duration
+                      <ClockIcon class="mr-1 inline-block" /> Dauer
                     </th>
                   </tr>
                 </thead>
@@ -114,7 +114,7 @@ const EntryPairRow: Component<EntryPairRowProps> = (props) => {
       <td>
         {props.pair.clockIn != null ?
           formatTimeForDisplay(props.pair.clockIn)
-        : "Missing"}
+        : "Fehlend"}
       </td>
       <td>
         {props.pair.clockOut != null ?
@@ -123,12 +123,12 @@ const EntryPairRow: Component<EntryPairRowProps> = (props) => {
             props.pair.clockIn ?? props.pair.clockOut,
           )
         : props.pair.missingEntry ?
-          "Missing"
-        : "Still clocked in"}
+          "Fehlend"
+        : "Noch eingestempelt"}
         {props.pair.dayBoundary && (
           <span
             class="tooltip tooltip-right ml-2"
-            data-tip="This entry crosses midnight"
+            data-tip="Dieser Eintrag überschreitet Mitternacht"
           >
             <CalendarPlusIcon class="text-accent inline-block" />
           </span>
@@ -136,7 +136,7 @@ const EntryPairRow: Component<EntryPairRowProps> = (props) => {
       </td>
       <td>
         {props.pair.missingEntry ?
-          "Unknown"
+          "Unbekannt"
         : formatTimeForDisplay(props.pair.duration)}
       </td>
     </tr>

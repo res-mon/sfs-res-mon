@@ -29,7 +29,7 @@ const FileInputSection: Component<{
   return (
     <div class="form-control mt-4">
       <label class="label">
-        <span class="label-text">Select Database File (.db)</span>
+        <span class="label-text">Datenbank-Datei auswählen (.db)</span>
       </label>
       <input
         type="file"
@@ -41,7 +41,7 @@ const FileInputSection: Component<{
       />
       <label class="label">
         <span class="label-text-alt">
-          Only SQLite database files are supported
+          Nur SQLite-Datenbankdateien werden unterstützt
         </span>
       </label>
     </div>
@@ -57,7 +57,7 @@ const FileDetailsSection: Component<{
 }> = (props) => {
   return (
     <div class="bg-base-300 mt-2 rounded-lg p-3">
-      <p class="text-sm font-medium">Selected file:</p>
+      <p class="text-sm font-medium">Ausgewählte Datei:</p>
       <p class="text-base-content/80 flex items-center gap-2">
         <DatabaseIcon class="h-4 w-4" />
         {props.file.name} ({(props.file.size / 1024 / 1024).toFixed(2)} MB)
@@ -92,7 +92,7 @@ const UploadResultSection: Component<{
           </div>
           <div class="flex-1">
             <p class="font-medium">
-              {props.result && props.result.success ? "Success" : "Error"}
+              {props.result && props.result.success ? "Erfolg" : "Fehler"}
             </p>
             <p class="text-base-content/80 text-sm">{props.result?.message}</p>
           </div>
@@ -129,7 +129,7 @@ const ActionButtons: Component<{
           (!props.hasSelectedFile && !props.hasUploadResult)
         }
       >
-        <CloseIcon class="mr-1" /> Cancel
+        <CloseIcon class="mr-1" /> Abbrechen
       </button>
       <button
         class="btn btn-primary"
@@ -140,12 +140,12 @@ const ActionButtons: Component<{
           when={props.isUploading}
           fallback={
             <>
-              <UploadIcon class="mr-2" /> Upload Database
+              <UploadIcon class="mr-2" /> Datenbank hochladen
             </>
           }
         >
           <>
-            <LoadingIcon class="mr-2 h-5 w-5" /> Uploading...
+            <LoadingIcon class="mr-2 h-5 w-5" /> Wird hochgeladen...
           </>
         </Show>
       </button>
@@ -176,7 +176,8 @@ const useFileUpload = () => {
         setSelectedFile(null);
         setUploadResult({
           success: false,
-          message: "Please select a valid SQLite database file (.db extension)",
+          message:
+            "Bitte wählen Sie eine gültige SQLite-Datenbankdatei aus (.db-Erweiterung)",
         });
       }
     }
@@ -207,7 +208,7 @@ const useFileUpload = () => {
         const errorMessage =
           error instanceof Error ?
             error.message
-          : "Failed to upload database file";
+          : "Fehler beim Hochladen der Datenbankdatei";
 
         setUploadResult({
           success: false,
@@ -269,12 +270,13 @@ const LegacyImportPanel: Component = (): JSX.Element => {
     <div class="card bg-base-200 intersect:motion-preset-fade-in intersect-once mx-auto max-w-lg shadow-xl">
       <div class="card-body">
         <h2 class="card-title">
-          <DatabaseIcon class="mr-2" /> Legacy Database Import
+          <DatabaseIcon class="mr-2" /> Legacy-Datenbank-Import
         </h2>
         <p class="text-base-content/70 text-sm">
-          Upload a legacy SQLite database file to import historical time
-          records. The system will extract and import all activity logs into
-          your current workspace.
+          Laden Sie eine Legacy-SQLite-Datenbankdatei hoch, um historische
+          Zeitaufzeichnungen zu importieren. Das System extrahiert und
+          importiert alle Aktivitätsprotokolle in Ihren aktuellen
+          Arbeitsbereich.
         </p>
 
         <FileInputSection

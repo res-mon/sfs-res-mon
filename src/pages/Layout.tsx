@@ -335,7 +335,9 @@ const Layout = (props: RouteSectionProps): JSX.Element => {
                 <span>
                   <LoadingIcon class="text-primary h-16 w-16" />
                 </span>
-                <p class="mt-4 text-lg font-medium">Loading content...</p>
+                <p class="mt-4 text-lg font-medium">
+                  Inhalte werden geladen...
+                </p>
               </div>
             </div>
           }

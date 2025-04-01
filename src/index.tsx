@@ -34,12 +34,12 @@ export const pageTree = {
     icon: InfoCircleIcon,
   },
   "work-clock": {
-    title: "Work Clock",
+    title: "Stempeluhr",
     component: lazy(() => import("./pages/WorkClock")),
     icon: ClockIcon,
   },
   "legacy-import": {
-    title: "Legacy Import",
+    title: "Legacy-Import",
     component: lazy(() => import("./pages/LegacyImport")),
     icon: DatabaseIcon,
   },

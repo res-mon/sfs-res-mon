@@ -50,12 +50,12 @@ const ClockStatusCard: Component<ClockStatusCardProps> = (props) => {
           fallback={
             <div class="flex flex-col items-center justify-center p-8">
               <LoadingIcon class="text-primary h-16 w-16" />
-              <p class="mt-4 text-lg">Loading your time data...</p>
+              <p class="mt-4 text-lg">Ihre Zeitdaten werden geladen...</p>
             </div>
           }
         >
           <h2 class="card-title">
-            <ClockIcon class="mr-2" /> Work Clock Status
+            <ClockIcon class="mr-2" /> Stempeluhr-Status
           </h2>
           <div class="stats mt-4 shadow">
             <div class="stat">
@@ -67,24 +67,24 @@ const ClockStatusCard: Component<ClockStatusCardProps> = (props) => {
               >
                 {props.isClockedIn ?
                   <>
-                    <ClockPlayIcon class="mr-1 inline-block" /> Clocked In
+                    <ClockPlayIcon class="mr-1 inline-block" /> Eingestempelt
                   </>
                 : <>
-                    <ClockPauseIcon class="mr-1 inline-block" /> Clocked Out
+                    <ClockPauseIcon class="mr-1 inline-block" /> Ausgestempelt
                   </>
                 }
               </div>
               <div class="stat-desc">
                 {props.lastAction ?
                   <>
-                    Last action: {getRelativeTime(props.lastAction.getTime())}
+                    Letzte Aktion: {getRelativeTime(props.lastAction.getTime())}
                   </>
-                : "No recent activity"}
+                : "Keine kürzliche Aktivität"}
               </div>
             </div>
 
             <div class="stat">
-              <div class="stat-title">Current Session</div>
+              <div class="stat-title">Aktuelle Sitzung</div>
               <div
                 class={`stat-value ${
                   props.isClockedIn ? "text-accent" : "text-base-content"
@@ -94,8 +94,7 @@ const ClockStatusCard: Component<ClockStatusCardProps> = (props) => {
               </div>
               <div class="stat-desc">
                 <div class="badge badge-primary p-3 text-lg">
-                  <TimeIcon class="mr-2" /> Today's Total:{" "}
-                  {props.todayTotalTime}
+                  <TimeIcon class="mr-2" /> Heute gesamt: {props.todayTotalTime}
                 </div>
               </div>
             </div>
@@ -109,10 +108,10 @@ const ClockStatusCard: Component<ClockStatusCardProps> = (props) => {
             >
               {props.isClockedIn ?
                 <>
-                  <ClockOutIcon class="mr-2" /> Clock Out
+                  <ClockOutIcon class="mr-2" /> Ausstempeln
                 </>
               : <>
-                  <ClockInIcon class="mr-2" /> Clock In
+                  <ClockInIcon class="mr-2" /> Einstempeln
                 </>
               }
             </button>

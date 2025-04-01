@@ -41,20 +41,20 @@ const TimeEntryTable: Component<TimeEntryTableProps> = (props) => {
       <div class="card bg-base-200 intersect:motion-preset-fade-in intersect-once mx-auto max-w-4xl shadow-xl">
         <div class="card-body">
           <h2 class="card-title">
-            <TableIcon class="mr-2" /> Work History
+            <TableIcon class="mr-2" /> Arbeitszeiten
           </h2>
           <div class="overflow-x-auto">
             <table class="table-zebra table w-full">
               <thead>
                 <tr>
                   <th>
-                    <CalendarIcon class="mr-1 inline-block" /> Date
+                    <CalendarIcon class="mr-1 inline-block" /> Datum
                   </th>
                   <th>
-                    <TimeIcon class="mr-1 inline-block" /> Hours
+                    <TimeIcon class="mr-1 inline-block" /> Stunden
                   </th>
                   <th class="text-right">
-                    <ClockIcon class="mr-1 inline-block" /> Entries
+                    <ClockIcon class="mr-1 inline-block" /> Einträge
                   </th>
                 </tr>
               </thead>
