@@ -52,49 +52,49 @@ const Info: Component = (): JSX.Element => {
     {
       title: "Projekt-Management",
       description:
-        "Verfolgen Sie Ihre Zeit über verschiedene Projekte hinweg und behalten Sie den Überblick.",
+        "Verfolge deine Zeit über verschiedene Projekte hinweg und behalte den Überblick.",
       icon: BriefcaseIcon,
     },
     {
       title: "Aufgabenorganisation",
       description:
-        "Unterteilen Sie Projekte in Teilbereiche, Unterbereiche und Aufgaben für eine strukturierte Arbeit.",
+        "Unterteile Projekte in Teilbereiche, Unterbereiche und Aufgaben für eine strukturierte Arbeit.",
       icon: BuildingSkyscraperIcon,
     },
     {
       title: "Tag-System",
       description:
-        "Kennzeichnen Sie Aufgaben mit Kategorien wie 'Architektur', 'Frontend' oder 'Backend'.",
+        "Kennzeichne Aufgaben mit Kategorien wie 'Architektur', 'Frontend' oder 'Backend'.",
       icon: ToolIcon,
     },
     {
       title: "Notizen und Bewertungen",
       description:
-        "Fügen Sie Kontext zu Aufgaben hinzu und bewerten Sie Ihre Zufriedenheit mit der Erledigung.",
+        "Füge Kontext zu Aufgaben hinzu und bewerte deine Zufriedenheit mit der Erledigung.",
       icon: BrainIcon,
     },
     {
       title: "Tool-Investment-Tracking",
       description:
-        "Berechnen Sie den ROI für Tools, die Sie entwickeln, um Arbeitsabläufe zu optimieren.",
+        "Berechne den ROI für Tools, die du entwickelst, um Arbeitsabläufe zu optimieren.",
       icon: ChartLineIcon,
     },
     {
       title: "Rechnungsgenerierung",
       description:
-        "Vereinfachen Sie die Kundenabrechnung basierend auf der erfassten Zeit.",
+        "Vereinfache die Kundenabrechnung basierend auf der erfassten Zeit.",
       icon: ReportMoneyIcon,
     },
     {
       title: "Ressourcenanalyse",
       description:
-        "Bewerten Sie die Rentabilität von Hardware- und Tool-Investitionen.",
+        "Bewerte die Rentabilität von Hardware- und Tool-Investitionen.",
       icon: DatabaseIcon,
     },
     {
       title: "Arbeitsanalyse",
       description:
-        "Überprüfen Sie aktuelle Muster, Einnahmen und Tarife Ihrer Arbeit.",
+        "Überprüfe aktuelle Muster, Einnahmen und Tarife deiner Arbeit.",
       icon: GlobeIcon,
     },
   ];
@@ -109,13 +109,13 @@ const Info: Component = (): JSX.Element => {
     {
       title: "Effizienz",
       description:
-        "Unsere Tools sollen Ihnen helfen, effizienter zu arbeiten und mehr Zeit für wichtige Aufgaben zu haben.",
+        "Unsere Tools sollen dir helfen, effizienter zu arbeiten und mehr Zeit für wichtige Aufgaben zu haben.",
       icon: RocketIcon,
     },
     {
       title: "Wertschätzung von Zeit",
       description:
-        "Zeit ist die wertvollste Ressource - wir helfen Ihnen, sie zu schätzen und optimal zu nutzen.",
+        "Zeit ist die wertvollste Ressource - wir helfen dir, sie zu schätzen und optimal zu nutzen.",
       icon: ClockIcon,
     },
     {
@@ -133,8 +133,8 @@ const Info: Component = (): JSX.Element => {
         <h1 class="mb-4 text-4xl font-bold md:text-5xl">Über ResMon</h1>
         <p class="mx-auto max-w-3xl text-xl">
           ResMon steht für <strong>Res</strong>ource <strong>Mon</strong>itor -
-          ein umfassendes Werkzeug zur Verfolgung Ihrer wertvollsten Ressourcen,
-          insbesondere <strong>Zeit</strong>.
+          ein umfassendes Werkzeug zur Verfolgung deiner wertvollsten
+          Ressourcen, insbesondere <strong>Zeit</strong>.
         </p>
       </section>
 
@@ -159,11 +159,11 @@ const Info: Component = (): JSX.Element => {
               intuitiv wie möglich zu gestalten.
             </p>
             <p>
-              Mit ResMon können Sie nicht nur Ihre Zeit verfolgen, sondern auch
+              Mit ResMon kannst du nicht nur deine Zeit verfolgen, sondern auch
               andere wertvolle Ressourcen wie Ausgaben, Werkzeuge und
-              Investitionen. Es bietet Ihnen einen umfassenden Überblick über
-              Ihre Ressourcennutzung und hilft Ihnen, fundierte Entscheidungen
-              zu treffen.
+              Investitionen. Es bietet dir einen umfassenden Überblick über
+              deine Ressourcennutzung und hilft dir, fundierte Entscheidungen zu
+              treffen.
             </p>
           </div>
         </div>
@@ -177,22 +177,22 @@ const Info: Component = (): JSX.Element => {
           </h2>
           <div class="prose max-w-none">
             <p>
-              Verschwenden Sie Ihre Ressourcen nicht, besonders nicht die
-              kostbarste: <strong>Zeit</strong>. Behalten Sie sie mit{" "}
+              Verschwende deine Ressourcen nicht, besonders nicht die
+              kostbarste: <strong>Zeit</strong>. Behalte sie mit{" "}
               <strong>ResMon</strong> im Blick.
             </p>
             <p>
-              Die Anwendung ist darauf ausgelegt, Ihre Aktivitäten, Ausgaben und
-              Erfolge autonom zu verfolgen - privat und transparent. Indem sie
-              die Nachverfolgung Ihrer Unternehmungen und Finanzen vereinfacht,
-              ermöglicht Ihnen ResMon, den Wert Ihrer Zeit und Investitionen zu
-              ermitteln.
+              Die Anwendung ist darauf ausgelegt, deine Aktivitäten, Ausgaben
+              und Erfolge autonom zu verfolgen - privat und transparent. Indem
+              sie die Nachverfolgung deiner Unternehmungen und Finanzen
+              vereinfacht, ermöglicht dir ResMon, den Wert deiner Zeit und
+              Investitionen zu ermitteln.
             </p>
             <p>
               Wir glauben, dass gute Entscheidungen auf guten Daten basieren.
-              ResMon hilft Ihnen, diese Daten zu sammeln und zu analysieren,
-              damit Sie fundierte Entscheidungen über Ihre Ressourcenverteilung
-              treffen können.
+              ResMon hilft dir, diese Daten zu sammeln und zu analysieren, damit
+              du fundierte Entscheidungen über deine Ressourcenverteilung
+              treffen kannst.
             </p>
           </div>
         </div>
@@ -288,10 +288,10 @@ const Info: Component = (): JSX.Element => {
         <div class="card bg-primary text-primary-content mx-auto max-w-2xl">
           <div class="card-body">
             <h2 class="card-title justify-center text-2xl">
-              Bereit, Ihre Ressourcen zu optimieren?
+              Bereit, deine Ressourcen zu optimieren?
             </h2>
             <p>
-              Beginnen Sie noch heute mit ResMon, um Ihre Zeit und Ressourcen
+              Beginne noch heute mit ResMon, um deine Zeit und Ressourcen
               effektiver zu verwalten!
             </p>
             <div class="card-actions mt-4 justify-center">
@@ -300,7 +300,7 @@ const Info: Component = (): JSX.Element => {
                 class="btn btn-outline"
                 target="_blank"
               >
-                Starten Sie jetzt
+                Starte jetzt
               </a>
             </div>
           </div>

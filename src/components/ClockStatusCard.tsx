@@ -50,7 +50,7 @@ const ClockStatusCard: Component<ClockStatusCardProps> = (props) => {
           fallback={
             <div class="flex flex-col items-center justify-center p-8">
               <LoadingIcon class="text-primary h-16 w-16" />
-              <p class="mt-4 text-lg">Ihre Zeitdaten werden geladen...</p>
+              <p class="mt-4 text-lg">Deine Zeitdaten werden geladen...</p>
             </div>
           }
         >

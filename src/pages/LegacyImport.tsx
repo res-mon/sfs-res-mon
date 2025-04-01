@@ -15,8 +15,8 @@ const LegacyImport: Component = (): JSX.Element => {
             <DatabaseIcon class="mr-2 inline-block" /> Legacy-Import
           </h1>
           <p class="intersect:motion-preset-slide-in-from-right intersect-once mx-auto max-w-3xl text-lg">
-            Importieren Sie Ihre Zeiterfassungsdaten aus älteren Datenbanken in
-            das neue System.
+            Importiere deine Zeiterfassungsdaten aus älteren Datenbanken in das
+            neue System.
           </p>
         </div>
 

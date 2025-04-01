@@ -271,7 +271,9 @@ const Layout = (props: RouteSectionProps): JSX.Element => {
             class="btn btn-ghost btn-circle btn-sm sm:btn-md"
             onClick={toggleTheme}
             aria-label={
-              isDarkMode() ? "Switch to light mode" : "Switch to dark mode"
+              isDarkMode() ?
+                "Zum hellen Modus wechseln"
+              : "Zum dunklen Modus wechseln"
             }
           >
             {isDarkMode() ?
@@ -285,7 +287,7 @@ const Layout = (props: RouteSectionProps): JSX.Element => {
             target="_blank"
             rel="noopener noreferrer"
             class="btn btn-ghost btn-circle btn-sm sm:btn-md"
-            aria-label="GitHub repository"
+            aria-label="GitHub Repository"
           >
             <GitHubIcon class="h-4 w-4 sm:h-5 sm:w-5" />
           </a>
@@ -294,7 +296,7 @@ const Layout = (props: RouteSectionProps): JSX.Element => {
           <button
             class="btn btn-ghost btn-circle btn-sm sm:btn-md lg:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen())}
-            aria-label={isMobileMenuOpen() ? "Close menu" : "Open menu"}
+            aria-label={isMobileMenuOpen() ? "Menü schließen" : "Menü öffnen"}
           >
             {isMobileMenuOpen() ?
               <XIcon class="h-4 w-4 sm:h-5 sm:w-5" />
@@ -354,7 +356,7 @@ const Layout = (props: RouteSectionProps): JSX.Element => {
               <AnarchyIcon class="inline" /> {new Date().getFullYear()}{" "}
               <HammerSickleIcon class="inline" />
             </span>{" "}
-            - Free and open-source software - with free as in freedom!{" "}
+            - Freie und quelloffene Software - mit frei im Sinne von Freiheit!{" "}
             <FlagIcon class="inline text-[#ff0000]" />
             <FistIcon class="inline" />
           </p>
@@ -370,7 +372,7 @@ const Layout = (props: RouteSectionProps): JSX.Element => {
         <button
           onClick={scrollToTop}
           class="btn btn-primary btn-xl btn-circle shadow-lg transition-transform duration-200 hover:scale-110"
-          aria-label="Scroll to top"
+          aria-label="Nach oben scrollen"
         >
           {showElevatorIcon() && <ElevatorIcon class="h-10 w-10" />}
         </button>

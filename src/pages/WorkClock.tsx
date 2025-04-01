@@ -118,9 +118,9 @@ const WorkClock: Component = (): JSX.Element => {
             <ClockIcon class="mr-2 inline-block" /> Stempeluhr
           </h1>
           <p class="intersect:motion-preset-slide-in-from-right intersect-once mx-auto max-w-3xl text-lg">
-            Verfolgen Sie Ihre Arbeitszeit effizient durch Ein- und Ausstempeln.
-            Sehen Sie Ihre täglichen Zeitaufzeichnungen und die gesamte
-            Arbeitszeit.
+            Verfolge deine Arbeitszeit effizient durch Ein- und Ausstempeln.
+            Sieh dir deine täglichen Zeitaufzeichnungen und die gesamte
+            Arbeitszeit an.
           </p>
         </div>
 

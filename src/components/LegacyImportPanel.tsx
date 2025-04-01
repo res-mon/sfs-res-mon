@@ -177,7 +177,7 @@ const useFileUpload = () => {
         setUploadResult({
           success: false,
           message:
-            "Bitte wählen Sie eine gültige SQLite-Datenbankdatei aus (.db-Erweiterung)",
+            "Bitte wähle eine gültige SQLite-Datenbankdatei aus (.db-Erweiterung)",
         });
       }
     }
@@ -273,9 +273,9 @@ const LegacyImportPanel: Component = (): JSX.Element => {
           <DatabaseIcon class="mr-2" /> Legacy-Datenbank-Import
         </h2>
         <p class="text-base-content/70 text-sm">
-          Laden Sie eine Legacy-SQLite-Datenbankdatei hoch, um historische
+          Lade eine Legacy-SQLite-Datenbankdatei hoch, um historische
           Zeitaufzeichnungen zu importieren. Das System extrahiert und
-          importiert alle Aktivitätsprotokolle in Ihren aktuellen
+          importiert alle Aktivitätsprotokolle in deinen aktuellen
           Arbeitsbereich.
         </p>
 
