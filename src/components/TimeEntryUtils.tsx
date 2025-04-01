@@ -12,6 +12,8 @@ import { TimeStampEntry } from "../services/workClock";
  * Represents a pair of clock-in and clock-out entries
  */
 export interface TimeEntryPair {
+  clockInId: string | undefined;
+  clockOutId: string | undefined;
   clockIn: number | null;
   clockOut: number | null;
   duration: number; // Duration in milliseconds
@@ -89,12 +91,94 @@ export function cleanupMiddleRecord(record: DailyRecord) {
 }
 
 /**
+ * Create time entry pairs from raw timestamp records
+ * This function takes an array of individual clock-in and clock-out records
+ * and pairs them together to create TimeEntryPair objects. It handles various
+ * edge cases like missing clock-ins or clock-outs and active sessions.
+ *
+ * @param records - Array of TimeStampEntry objects from PocketBase
+ * @returns Array of paired clock-in/clock-out entries
+ */
+function createPairs(records: TimeStampEntry[]): TimeEntryPair[] {
+  // Sort by date (oldest first)
+  records.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+  const pairs: TimeEntryPair[] = [];
+  let currentPair: TimeEntryPair | null = null;
+
+  for (const record of records) {
+    if (record.clock_in) {
+      if (currentPair != null) {
+        // If there is already a clock-in, we need to close the previous pair
+        pairs.push(currentPair);
+      }
+
+      currentPair = {
+        clockInId: record.id,
+        clockOutId: undefined,
+        clockIn: record.timestamp.getTime(),
+        clockOut: null,
+        duration: 0,
+        dayBoundary: false,
+        missingEntry: true,
+      };
+    } else {
+      if (currentPair != null && currentPair.clockIn != null) {
+        currentPair.clockOutId = record.id;
+        currentPair.clockOut = record.timestamp.getTime();
+        currentPair.duration = currentPair.clockOut - currentPair.clockIn;
+        currentPair.missingEntry = false;
+        currentPair.dayBoundary = !isSameLocalDay(
+          currentPair.clockIn,
+          currentPair.clockOut,
+        );
+        pairs.push(currentPair);
+        currentPair = null;
+      } else {
+        // If there is a clock-out without a preceding clock-in
+        pairs.push({
+          clockInId: undefined,
+          clockOutId: record.id,
+          clockIn: null,
+          clockOut: record.timestamp.getTime(),
+          duration: 0,
+          dayBoundary: false,
+          missingEntry: true,
+        });
+        currentPair = null;
+      }
+    }
+  }
+
+  // If there is an unclosed pair it is the currently active session
+  if (currentPair != null) {
+    currentPair.missingEntry = false;
+    pairs.push(currentPair);
+  }
+
+  return pairs;
+}
+
+/**
+ * Extract the date string from a TimeEntryPair
+ * Returns a formatted date string (YYYY-MM-DD) based on either the clock-in or clock-out timestamp.
+ * If neither exists, returns the current date.
+ *
+ * @param pair - A TimeEntryPair object containing timestamp data
+ * @returns Formatted date string in YYYY-MM-DD format
+ */
+function getPairDate(pair: TimeEntryPair): string {
+  const date = new Date(pair.clockIn ?? pair.clockOut ?? new Date().getTime());
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0",
+  )}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+/**
  * Cleanup all daily records and handle the active session
  */
 export function cleanupDailyRecords(records: DailyRecord[]): DailyRecord[] {
-  // Sort by date (newest first)
-  records.sort((a, b) => b.date.localeCompare(a.date));
-
   for (let i = 1; i < records.length; i++) {
     cleanupMiddleRecord(records[i]);
   }
@@ -124,107 +208,68 @@ export function cleanupDailyRecords(records: DailyRecord[]): DailyRecord[] {
  * @returns Array of DailyRecord objects for UI rendering
  */
 export function processTimeEntries(entries: TimeStampEntry[]): DailyRecord[] {
-  // Group by date (YYYY-MM-DD)
-  const entriesByDate: Record<string, TimeStampEntry[]> = {};
+  // First create pairs from the raw timestamp entries
+  const pairs = createPairs(entries);
 
-  // First pass: group entries by date
-  entries.forEach((entry) => {
-    const localDate = `${entry.timestamp.getFullYear()}-${String(
-      entry.timestamp.getMonth() + 1,
-    ).padStart(2, "0")}-${String(entry.timestamp.getDate()).padStart(2, "0")}`;
-    if (
-      (entriesByDate[localDate] as unknown as TimeStampEntry | undefined) ==
-      null
-    ) {
-      entriesByDate[localDate] = [];
+  // Group pairs by date (YYYY-MM-DD)
+  const pairsByDate: Record<string, TimeEntryPair[]> = {};
+
+  // Group entry pairs by date
+  pairs.forEach((pair) => {
+    const date = getPairDate(pair);
+    if (!(pairsByDate[date] as unknown as TimeEntryPair[] | undefined)) {
+      pairsByDate[date] = [];
     }
-    entriesByDate[localDate].push(entry);
+    pairsByDate[date].push(pair);
   });
 
-  // Second pass: create DailyRecord objects
+  // Create DailyRecord objects from the grouped pairs
   const dailyRecords: DailyRecord[] = [];
 
-  Object.keys(entriesByDate).forEach((date) => {
-    const dayEntries = entriesByDate[date];
-    // Sort by timestamp (oldest first)
-    dayEntries.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
-    const entryPairs: TimeEntryPair[] = [];
+  Object.keys(pairsByDate).forEach((date) => {
+    const dayPairs = pairsByDate[date];
     let totalTime = 0;
     let hasMissingEntries = false;
     let isActive = false;
 
-    // Create clock-in/clock-out pairs
-    for (let i = 0; i < dayEntries.length; i++) {
-      const entry = dayEntries[i];
-
-      if (entry.clock_in) {
-        // This is a clock-in, look for next clock-out
-        const clockIn = entry.timestamp.getTime();
-        let clockOut: number | null = null;
-        let duration = 0;
-        let dayBoundary = false;
-        let missingEntry = false;
-
-        // Look for matching clock-out
-        if (i + 1 < dayEntries.length && !dayEntries[i + 1].clock_in) {
-          // Found a clock-out
-          const clockOutEntry = dayEntries[i + 1];
-          clockOut = clockOutEntry.timestamp.getTime();
-          duration = clockOut - clockIn;
-
-          // Check for day boundary crossing
-          dayBoundary = !isSameLocalDay(new Date(clockIn), new Date(clockOut));
-
-          // Skip the clock-out in next iteration
-          i++;
-        } else {
-          // No matching clock-out, user is still clocked in
-          clockOut = null;
-          duration = new Date().getTime() - clockIn;
-          missingEntry = i !== dayEntries.length - 1;
-          isActive = i === dayEntries.length - 1;
-
-          // If it's not the last entry, it's a missing clock-out
-          hasMissingEntries ||= missingEntry;
-        }
-
-        entryPairs.push({
-          clockIn,
-          clockOut,
-          duration,
-          dayBoundary,
-          missingEntry,
-        });
-
-        // Only add to total time if it's not missing an entry (except for active sessions)
-        if (!missingEntry || isActive) {
-          totalTime += duration;
-        }
-      } else {
-        // This is a clock-out without a preceding clock-in
-        const clockOut = entry.timestamp.getTime();
-        // Group with previous day if it's a clock-out without a clock-in
-        entryPairs.push({
-          clockIn: null,
-          clockOut,
-          duration: 0, // Unknown duration
-          dayBoundary: false,
-          missingEntry: true,
-        });
+    // Calculate totals and check for issues
+    for (const pair of dayPairs) {
+      // Check for missing entries
+      if (pair.missingEntry) {
         hasMissingEntries = true;
+      }
+
+      // Check for active session
+      if (
+        pair.clockIn !== null &&
+        pair.clockOut === null &&
+        !pair.missingEntry
+      ) {
+        isActive = true;
+        // For active sessions, calculate duration up to current time
+        pair.duration = new Date().getTime() - pair.clockIn;
+      }
+
+      // Only add to total time if it's not missing an entry
+      if (!pair.missingEntry) {
+        totalTime += pair.duration;
       }
     }
 
     dailyRecords.push({
       date,
-      entryPairs,
+      entryPairs: dayPairs,
       totalTime,
       formattedTotal: formatDuration(totalTime),
       hasMissingEntries,
       isActive,
     });
   });
+
+  // Sort daily records by date (newest first)
+  dailyRecords.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
 
   return cleanupDailyRecords(dailyRecords);
 }
