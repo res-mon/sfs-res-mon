@@ -9,6 +9,7 @@ import DaisyUiIcon from "~icons/logos/daisyui-icon";
 import LucideIcon from "~icons/simple-icons/lucide";
 import ClockIcon from "~icons/tabler/clock";
 import CodeIcon from "~icons/tabler/code";
+import InfoCircleIcon from "~icons/tabler/info-circle";
 
 import { Component, ComponentProps, For, JSX, lazy } from "solid-js";
 
@@ -37,6 +38,11 @@ export const pageTree = {
     title: "Hello World!",
     component: lazy(() => import("./pages/Index")),
     icon: WorldIcon,
+  },
+  info: {
+    title: "Info",
+    component: lazy(() => import("./pages/Info")),
+    icon: InfoCircleIcon,
   },
   "work-clock": {
     title: "Work Clock",
