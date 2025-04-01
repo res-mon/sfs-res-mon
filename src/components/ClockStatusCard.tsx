@@ -11,7 +11,6 @@ import { Component, Show } from "solid-js";
 import { Effect } from "effect";
 
 import { TimeStampEntry, addClockEntry } from "../services/workClock";
-import CreateRandomStampings from "./CreateRandomStampings";
 import { getRelativeTime } from "./TimeEntryUtils";
 
 interface ClockStatusCardProps {
@@ -118,7 +117,6 @@ const ClockStatusCard: Component<ClockStatusCardProps> = (props) => {
               }
             </button>
           </div>
-          <CreateRandomStampings />
         </Show>
       </div>
     </div>
