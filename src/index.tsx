@@ -2,6 +2,7 @@
 import "./styles/general.css";
 
 import ClockIcon from "~icons/tabler/clock";
+import DatabaseIcon from "~icons/tabler/database";
 import InfoCircleIcon from "~icons/tabler/info-circle";
 
 import { Component, ComponentProps, For, JSX, lazy } from "solid-js";
@@ -36,6 +37,11 @@ export const pageTree = {
     title: "Work Clock",
     component: lazy(() => import("./pages/WorkClock")),
     icon: ClockIcon,
+  },
+  "legacy-import": {
+    title: "Legacy Import",
+    component: lazy(() => import("./pages/LegacyImport")),
+    icon: DatabaseIcon,
   },
 } as const;
 

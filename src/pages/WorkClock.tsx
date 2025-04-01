@@ -1,18 +1,10 @@
 import ClockIcon from "~icons/tabler/clock";
 
-import {
-  Component,
-  JSX,
-  Show,
-  createEffect,
-  createSignal,
-  onMount,
-} from "solid-js";
+import { Component, JSX, createEffect, createSignal, onMount } from "solid-js";
 
 import { Effect } from "effect";
 
 import ClockStatusCard from "../components/ClockStatusCard";
-import LegacyImportPanel from "../components/LegacyImportPanel";
 import TimeEntryTable from "../components/TimeEntryTable";
 import {
   DailyRecord,
@@ -137,11 +129,6 @@ const WorkClock: Component = (): JSX.Element => {
           todayTotalTime={todayTotalTime()}
           onClockToggle={handleClockToggle}
         />
-
-        {/* Legacy Import Section */}
-        <Show when={!isLoading()}>
-          <LegacyImportPanel />
-        </Show>
 
         {/* Time History Section */}
         <TimeEntryTable dailyRecords={dailyRecords()} />
