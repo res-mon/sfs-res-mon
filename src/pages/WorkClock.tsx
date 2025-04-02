@@ -24,6 +24,23 @@ const WorkClock: Component = (): JSX.Element => {
   const [isLoading, setIsLoading] = createSignal(true);
   const [isClockedIn, setIsClockedIn] = createSignal<boolean>(false);
   const [lastAction, setLastAction] = createSignal<Date | null>(null);
+  const [currentTime, setCurrentTime] = createSignal<[number, number, number]>([
+    0, 0, 0,
+  ]);
+
+  // Update current time every second
+  onMount(() => {
+    const updateCurrentTime = () => {
+      const now = new Date();
+      setCurrentTime([now.getHours(), now.getMinutes(), now.getSeconds()]);
+    };
+
+    // Update immediately and then every second
+    updateCurrentTime();
+    const timeInterval = setInterval(updateCurrentTime, 1000);
+
+    return () => clearInterval(timeInterval);
+  });
 
   // Process today's record to check if user is clocked in
   const processTimeRecord = (entries: TimeStampEntry[]) => {
@@ -122,6 +139,37 @@ const WorkClock: Component = (): JSX.Element => {
             Sieh dir deine täglichen Zeitaufzeichnungen und die gesamte
             Arbeitszeit an.
           </p>
+        </div>
+
+        {/* Current Time Display with DaisyUI Countdown */}
+        <div class="intersect:motion-preset-fade-in intersect-once mx-auto w-full">
+          <div class="flex flex-col items-center justify-center">
+            <span class="countdown font-mono text-5xl sm:text-7xl lg:text-9xl">
+              <span
+                aria-live="polite"
+                aria-label={`${currentTime()[0]}`}
+                {...{ style: { "--value": currentTime()[0] } }}
+              >
+                {currentTime()[0]}
+              </span>
+              :
+              <span
+                aria-live="polite"
+                aria-label={`${currentTime()[1]}`}
+                {...{ style: { "--value": currentTime()[1] } }}
+              >
+                {currentTime()[1]}
+              </span>
+              :
+              <span
+                aria-live="polite"
+                aria-label={`${currentTime()[2]}`}
+                {...{ style: { "--value": currentTime()[2] } }}
+              >
+                {currentTime()[2]}
+              </span>
+            </span>
+          </div>
         </div>
 
         {/* Clock In/Out Section */}
