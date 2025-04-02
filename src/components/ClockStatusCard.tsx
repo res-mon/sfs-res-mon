@@ -43,7 +43,7 @@ const ClockStatusCard: Component<ClockStatusCardProps> = (props) => {
   };
 
   return (
-    <div class="card bg-base-200 intersect:motion-preset-fade-in intersect-once mx-auto max-w-lg shadow-xl">
+    <div class="card bg-base-200 intersect:motion-preset-fade-in intersect-once mx-auto w-full shadow-xl">
       <div class="card-body">
         <Show
           when={!props.isLoading}
@@ -57,52 +57,59 @@ const ClockStatusCard: Component<ClockStatusCardProps> = (props) => {
           <h2 class="card-title">
             <ClockIcon class="mr-2" /> Stempeluhr-Status
           </h2>
-          <div class="stats mt-4 shadow">
-            <div class="stat">
-              <div class="stat-title">Status</div>
-              <div
-                class={`stat-value ${
-                  props.isClockedIn ? "text-success" : "text-error"
-                }`}
-              >
-                {props.isClockedIn ?
-                  <>
-                    <ClockPlayIcon class="mr-1 inline-block" /> Eingestempelt
-                  </>
-                : <>
-                    <ClockPauseIcon class="mr-1 inline-block" /> Ausgestempelt
-                  </>
-                }
-              </div>
-              <div class="stat-desc">
-                {props.lastAction ?
-                  <>
-                    Letzte Aktion: {getRelativeTime(props.lastAction.getTime())}
-                  </>
-                : "Keine kürzliche Aktivität"}
+          <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="stats w-full shadow">
+              <div class="stat">
+                <div class="stat-title">Status</div>
+                <div
+                  class={`stat-value text-2xl sm:text-3xl ${
+                    props.isClockedIn ? "text-success" : "text-error"
+                  }`}
+                >
+                  {props.isClockedIn ?
+                    <>
+                      <ClockPlayIcon class="mr-1 inline-block" /> Eingestempelt
+                    </>
+                  : <>
+                      <ClockPauseIcon class="mr-1 inline-block" /> Ausgestempelt
+                    </>
+                  }
+                </div>
+                <div class="stat-desc">
+                  {props.lastAction ?
+                    <>
+                      {"Letzte Aktion: "}
+                      {getRelativeTime(props.lastAction.getTime())}
+                    </>
+                  : "Keine kürzliche Aktivität"}
+                </div>
               </div>
             </div>
 
-            <div class="stat">
-              <div class="stat-title">Aktuelle Sitzung</div>
-              <div
-                class={`stat-value ${
-                  props.isClockedIn ? "text-accent" : "text-base-content"
-                }`}
-              >
-                {props.isClockedIn ? props.currentSessionTime : "-:--:--"}
-              </div>
-              <div class="stat-desc">
-                <div class="badge badge-primary p-3 text-lg">
-                  <TimeIcon class="mr-2" /> Heute gesamt: {props.todayTotalTime}
+            <div class="stats w-full shadow">
+              <div class="stat">
+                <div class="stat-title">Aktuelle Sitzung</div>
+                <div
+                  class={`stat-value text-2xl sm:text-3xl ${
+                    props.isClockedIn ? "text-accent" : "text-base-content"
+                  }`}
+                >
+                  {props.isClockedIn ? props.currentSessionTime : "-:--:--"}
+                </div>
+                <div class="stat-desc">
+                  <div class="badge badge-primary p-2 text-sm sm:p-3 sm:text-lg">
+                    <TimeIcon class="mr-1 sm:mr-2" />
+                    {"Heute gesamt: "}
+                    {props.todayTotalTime}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="card-actions mt-2 justify-center">
+          <div class="card-actions mt-4 justify-center">
             <button
               onClick={toggleClock}
-              class={`btn btn-lg ${
+              class={`btn btn-md sm:btn-lg w-full sm:w-auto ${
                 props.isClockedIn ? "btn-error" : "btn-success"
               }`}
             >
