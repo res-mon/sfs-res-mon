@@ -39,11 +39,12 @@ func init() {
 
 		// Security rules
 		// Empty strings mean no rules are applied (unrestricted)
-		c.CreateRule = ref("") // Who can create records
-		c.DeleteRule = ref("") // Who can delete records
-		c.ListRule = ref("")   // Who can list/query records
-		c.UpdateRule = ref("") // Who can update records
-		c.ViewRule = ref("")   // Who can view individual records
+		// Nil means only superusers can perform the action
+		c.CreateRule = nil   // Who can create records
+		c.DeleteRule = nil   // Who can delete records
+		c.ListRule = ref("") // Who can list/query records
+		c.UpdateRule = nil   // Who can update records
+		c.ViewRule = ref("") // Who can view individual records
 
 		// Field definitions for the work_clock collection
 		c.Fields = []core.Field{
@@ -109,8 +110,7 @@ func init() {
 			"CREATE UNIQUE INDEX " +
 				"`idx_1743167663_01_a` " +
 				"ON `work_clock` " +
-				"(`timestamp`," +
-				"`clock_in`)",
+				"(`timestamp`)",
 		}
 
 		// Save the collection to the database
