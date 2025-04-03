@@ -1,16 +1,42 @@
+import ArrowsLeftRightIcon from "~icons/tabler/arrows-left-right";
+import EnergyIcon from "~icons/tabler/bulb";
+import CalendarIcon from "~icons/tabler/calendar";
+import ChartBarIcon from "~icons/tabler/chart-bar";
+import ChartIcon from "~icons/tabler/chart-line";
 import ClockIcon from "~icons/tabler/clock";
+import MapIcon from "~icons/tabler/map";
+import ReportIcon from "~icons/tabler/report-analytics";
+import TableIcon from "~icons/tabler/table";
+import TimelineIcon from "~icons/tabler/timeline";
 
-import { Component, JSX, createEffect, createSignal, onMount } from "solid-js";
+import {
+  Component,
+  For,
+  JSX,
+  Show,
+  createEffect,
+  createSignal,
+  onMount,
+} from "solid-js";
 
 import { Effect } from "effect";
 
+import ActivityHeatmap from "../components/ActivityHeatmap";
+import CircularTimeDisplay from "../components/CircularTimeDisplay";
 import ClockStatusCard from "../components/ClockStatusCard";
+import ComparisonView from "../components/ComparisonView";
+import EnergyChart from "../components/EnergyChart";
+import MonthCalendar from "../components/MonthCalendar";
+import StatsDashboard from "../components/StatsDashboard";
 import TimeEntryTable from "../components/TimeEntryTable";
 import {
   DailyRecord,
   formatDuration,
   processTimeEntries,
 } from "../components/TimeEntryUtils";
+import TimelineView from "../components/TimelineView";
+import WeekPattern from "../components/WeekPattern";
+import WorkJourney from "../components/WorkJourney";
 import { TimeStampEntry, getTimeEntries } from "../services/workClock";
 import { ObserverProvider } from "./Layout";
 
@@ -27,6 +53,23 @@ const WorkClock: Component = (): JSX.Element => {
   const [currentTime, setCurrentTime] = createSignal<[number, number, number]>([
     0, 0, 0,
   ]);
+
+  // Track which visualization is active
+  type VisualType =
+    | "heatmap"
+    | "clock"
+    | "timeline"
+    | "stats"
+    | "comparison"
+    | "table"
+    | "weekpattern"
+    | "journey"
+    | "energy"
+    | "calendar";
+  const [activeVisual, setActiveVisual] = createSignal<VisualType>("heatmap");
+  const [selectedDate, setSelectedDate] = createSignal<string | undefined>(
+    undefined,
+  );
 
   // Update current time every second
   onMount(() => {
@@ -126,6 +169,66 @@ const WorkClock: Component = (): JSX.Element => {
     setDailyRecords(processTimeEntries(updatedEntries));
   };
 
+  // Handle day click in heatmap, journey view or calendar view
+  const handleDayClick = (date: string) => {
+    setSelectedDate(date);
+    setActiveVisual("clock");
+  };
+
+  // Group visualizations for tab organization
+  const visualizations = [
+    {
+      id: "heatmap",
+      label: "Aktivitätsübersicht",
+      icon: <ChartIcon class="mr-1 hidden sm:inline" />,
+    },
+    {
+      id: "clock",
+      label: "Tagesverlauf",
+      icon: <ClockIcon class="mr-1 hidden sm:inline" />,
+    },
+    {
+      id: "timeline",
+      label: "Zeitverlauf",
+      icon: <TimelineIcon class="mr-1 hidden sm:inline" />,
+    },
+    {
+      id: "calendar",
+      label: "Monatsübersicht",
+      icon: <CalendarIcon class="mr-1 hidden sm:inline" />,
+    },
+    {
+      id: "energy",
+      label: "Energiekurve",
+      icon: <EnergyIcon class="mr-1 hidden sm:inline" />,
+    },
+    {
+      id: "weekpattern",
+      label: "Wochenmuster",
+      icon: <ReportIcon class="mr-1 hidden sm:inline" />,
+    },
+    {
+      id: "journey",
+      label: "Arbeitsreise",
+      icon: <MapIcon class="mr-1 hidden sm:inline" />,
+    },
+    {
+      id: "stats",
+      label: "Statistik",
+      icon: <ChartBarIcon class="mr-1 hidden sm:inline" />,
+    },
+    {
+      id: "comparison",
+      label: "Vergleich",
+      icon: <ArrowsLeftRightIcon class="mr-1 hidden sm:inline" />,
+    },
+    {
+      id: "table",
+      label: "Tabelle",
+      icon: <TableIcon class="mr-1 hidden sm:inline" />,
+    },
+  ];
+
   return (
     <ObserverProvider>
       <div class="space-y-8">
@@ -148,7 +251,7 @@ const WorkClock: Component = (): JSX.Element => {
               <span
                 aria-live="polite"
                 aria-label={`${currentTime()[0]}`}
-                {...{ style: { "--value": currentTime()[0] } }}
+                style={{ "--value": currentTime()[0] }}
               >
                 {currentTime()[0]}
               </span>
@@ -156,7 +259,7 @@ const WorkClock: Component = (): JSX.Element => {
               <span
                 aria-live="polite"
                 aria-label={`${currentTime()[1]}`}
-                {...{ style: { "--value": currentTime()[1] } }}
+                style={{ "--value": currentTime()[1] }}
               >
                 {currentTime()[1]}
               </span>
@@ -164,7 +267,7 @@ const WorkClock: Component = (): JSX.Element => {
               <span
                 aria-live="polite"
                 aria-label={`${currentTime()[2]}`}
-                {...{ style: { "--value": currentTime()[2] } }}
+                style={{ "--value": currentTime()[2] }}
               >
                 {currentTime()[2]}
               </span>
@@ -182,8 +285,101 @@ const WorkClock: Component = (): JSX.Element => {
           onClockToggle={handleClockToggle}
         />
 
-        {/* Time History Section */}
-        <TimeEntryTable dailyRecords={dailyRecords()} />
+        {/* Visualization toggle buttons in a scrollable container */}
+        <div class="flex justify-center">
+          <div class="tabs tabs-boxed bg-base-200 max-w-full overflow-x-auto p-1">
+            <For each={visualizations}>
+              {(vis) => (
+                <button
+                  class={`tab tab-sm sm:tab-md whitespace-nowrap ${activeVisual() === vis.id ? "tab-active" : ""}`}
+                  onClick={() => setActiveVisual(vis.id as VisualType)}
+                >
+                  {vis.icon}
+                  {vis.label}
+                </button>
+              )}
+            </For>
+          </div>
+        </div>
+
+        {/* Visualizations */}
+        <Show when={!isLoading()}>
+          <Show when={activeVisual() === "heatmap"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <ActivityHeatmap
+                dailyRecords={dailyRecords()}
+                onDayClick={handleDayClick}
+              />
+            </div>
+          </Show>
+
+          <Show when={activeVisual() === "clock"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <CircularTimeDisplay
+                dailyRecords={dailyRecords()}
+                selectedDate={selectedDate()}
+                onDateSelect={setSelectedDate}
+              />
+            </div>
+          </Show>
+
+          <Show when={activeVisual() === "timeline"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <TimelineView dailyRecords={dailyRecords()} />
+            </div>
+          </Show>
+
+          <Show when={activeVisual() === "calendar"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <MonthCalendar
+                dailyRecords={dailyRecords()}
+                onDateSelect={handleDayClick}
+              />
+            </div>
+          </Show>
+
+          <Show when={activeVisual() === "energy"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <EnergyChart
+                dailyRecords={dailyRecords()}
+                daysToAnalyze={30}
+              />
+            </div>
+          </Show>
+
+          <Show when={activeVisual() === "weekpattern"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <WeekPattern dailyRecords={dailyRecords()} />
+            </div>
+          </Show>
+
+          <Show when={activeVisual() === "journey"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <WorkJourney
+                dailyRecords={dailyRecords()}
+                onDaySelect={handleDayClick}
+              />
+            </div>
+          </Show>
+
+          <Show when={activeVisual() === "stats"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <StatsDashboard dailyRecords={dailyRecords()} />
+            </div>
+          </Show>
+
+          <Show when={activeVisual() === "comparison"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <ComparisonView dailyRecords={dailyRecords()} />
+            </div>
+          </Show>
+
+          <Show when={activeVisual() === "table"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <TimeEntryTable dailyRecords={dailyRecords()} />
+            </div>
+          </Show>
+        </Show>
       </div>
     </ObserverProvider>
   );
