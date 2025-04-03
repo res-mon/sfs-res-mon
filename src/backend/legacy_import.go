@@ -32,9 +32,9 @@ type ActivityLog struct {
 	Active    bool      `json:"active"`    // true = clock-in, false = clock-out
 }
 
-// RegisterAPI registers the legacy import endpoint with the PocketBase server.
+// RegisterLegacyImportAPI registers the legacy import endpoint with the PocketBase server.
 // It creates a POST route at '/api/legacy_import' that accepts database files for import.
-func RegisterAPI(app *pocketbase.PocketBase) {
+func RegisterLegacyImportAPI(app *pocketbase.PocketBase) {
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		se.Router.POST("/api/legacy_import", func(e *core.RequestEvent) error {
 			return handlePost(app, e.Request, e.Response)

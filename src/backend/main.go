@@ -35,7 +35,7 @@ func Main(isGoRun bool, dist fs.FS) {
 		return se.Next()
 	})
 
-	RegisterAPI(app)
+	RegisterLegacyImportAPI(app)
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
