@@ -228,8 +228,7 @@ func importActivityLogs(app *pocketbase.PocketBase, logs []ActivityLog) error {
 		record.Set("timestamp", log.Timestamp)
 		record.Set("clock_in", log.Active)
 
-		err = app.Save(record)
-		if err != nil {
+		if err = app.Save(record); err != nil {
 			return fmt.Errorf("failed to save record: %w", err)
 		}
 	}
