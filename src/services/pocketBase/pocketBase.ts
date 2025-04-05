@@ -83,7 +83,7 @@ export type DateInvalidFormatError = Error<"dateInvalidFormat">;
  */
 export function dateToRFC3339Parts(
   date: Date,
-): Effect.Effect<[string, string], DateInvalidError> {
+): Effect.Effect<[string, string], DateInvalidError | DateInvalidFormatError> {
   if (isNaN(date.getTime())) {
     return Effect.fail({
       type: "dateInvalid",
@@ -101,9 +101,11 @@ export function dateToRFC3339Parts(
 
   // If we still don't have two parts, the date format is unexpected
   if (parts.length !== 2) {
-    throw new Error(
-      "Expected date to ISO string to contain a 'T' or ' ' separator.",
-    );
+    return Effect.fail({
+      type: "dateInvalidFormat",
+      message:
+        "Unexpected date format: ISO string did not contain 'T' or ' ' separator.",
+    });
   }
 
   return Effect.succeed(parts as [string, string]);
@@ -121,7 +123,7 @@ export function dateToRFC3339Parts(
  */
 export function dateToRFC3339(
   date: Date,
-): Effect.Effect<string, DateInvalidError> {
+): Effect.Effect<string, DateInvalidError | DateInvalidFormatError> {
   return pipe(
     dateToRFC3339Parts(date),
     Effect.map((parts) => parts.join(" ")),
