@@ -36,6 +36,7 @@ func Main(isGoRun bool, dist fs.FS) {
 	})
 
 	RegisterLegacyImportAPI(app)
+	RegisterWorkClockAPI(app)
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
