@@ -1,3 +1,4 @@
+import effectPlugin from "@effect/eslint-plugin";
 import { fixupPluginRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
@@ -33,6 +34,7 @@ export default [
       "@typescript-eslint": typescriptEslint,
       prettier,
       import: fixupPluginRules(_import),
+      "@effect": effectPlugin,
     },
 
     languageOptions: {
