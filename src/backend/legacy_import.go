@@ -37,13 +37,13 @@ type ActivityLog struct {
 func RegisterLegacyImportAPI(app *pocketbase.PocketBase) {
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		se.Router.POST("/api/legacy_import", func(e *core.RequestEvent) error {
-			return handlePost(app, e.Request, e.Response)
+			return handleLegacyImportPost(app, e.Request, e.Response)
 		})
 		return se.Next()
 	})
 }
 
-// handlePost processes HTTP POST requests for the legacy import endpoint.
+// handleLegacyImportPost processes HTTP POST requests for the legacy import endpoint.
 // It handles file uploads, validates the file, processes the contained data,
 // and responds with the results of the import operation.
 //
@@ -53,7 +53,7 @@ func RegisterLegacyImportAPI(app *pocketbase.PocketBase) {
 // - resp: The HTTP response writer to return results to the client
 //
 // Returns an error if any part of the import process fails.
-func handlePost(app *pocketbase.PocketBase, req *http.Request, resp http.ResponseWriter) error {
+func handleLegacyImportPost(app *pocketbase.PocketBase, req *http.Request, resp http.ResponseWriter) error {
 	// Max upload size of 50MB
 	const maxUploadSize = 50 * 1024 * 1024
 	req.Body = http.MaxBytesReader(resp, req.Body, maxUploadSize)
