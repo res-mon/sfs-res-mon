@@ -363,7 +363,7 @@ func checkValidity(app core.App, workClockID string) error {
 		return fmt.Errorf("failed to find succeeding work clock record: %w", err)
 	}
 
-	if len(succeedingRecords) > 0 && succeedingRecords[0].GetBool("clock_in") != record.GetBool("clock_in") {
+	if len(succeedingRecords) > 0 && succeedingRecords[0].GetBool("clock_in") == record.GetBool("clock_in") {
 		if record.GetBool("clock_in") {
 			return fmt.Errorf("expected the succeeding work clock record with id '%s' to be a clock out record", succeedingRecords[0].Id)
 		} else {
