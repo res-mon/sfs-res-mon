@@ -216,21 +216,25 @@ func readActivityLogs(dbPath string) ([]ActivityLog, error) {
 // to the PocketBase work_clock collection schema, where:
 // - ActivityLog.Timestamp -> work_clock.timestamp
 // - ActivityLog.Active -> work_clock.clock_in
+//
+// It uses addManyWorkClockRecords to import the logs in a single transaction,
+// ensuring data consistency and proper validation of the clock in/out sequence.
+// All logs are processed as a single unit, and the transaction will roll back
+// if any record violates the validation rules.
 func importActivityLogs(app *pocketbase.PocketBase, logs []ActivityLog) error {
-	collection, err := app.FindCollectionByNameOrId("work_clock")
-	if err != nil {
-		return fmt.Errorf("failed to find collection: %w", err)
-	}
+	clockInTimestamps := make([]time.Time, 0, len(logs))
+	clockOutTimestamps := make([]time.Time, 0, len(logs))
 
 	for _, log := range logs {
-		record := core.NewRecord(collection)
-
-		record.Set("timestamp", log.Timestamp)
-		record.Set("clock_in", log.Active)
-
-		if err = app.Save(record); err != nil {
-			return fmt.Errorf("failed to save record: %w", err)
+		if log.Active {
+			clockInTimestamps = append(clockInTimestamps, log.Timestamp)
+		} else {
+			clockOutTimestamps = append(clockOutTimestamps, log.Timestamp)
 		}
+	}
+
+	if err := addManyWorkClockRecords(app, clockInTimestamps, clockOutTimestamps); err != nil {
+		return fmt.Errorf("failed to add work clock records: %w", err)
 	}
 
 	return nil

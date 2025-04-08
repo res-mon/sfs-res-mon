@@ -3,7 +3,7 @@
 // This module provides comprehensive functionality to track work hours by implementing clock-in and clock-out
 // operations. It exposes API endpoints to manage the clock state, including clocking in,
 // clocking out, toggling the current state, modifying timestamps, deleting entries,
-// and adding manual clock in/out pairs.
+// adding manual clock in/out pairs, and bulk importing multiple clock in/out records.
 //
 // The module ensures thread-safety when modifying clock status and prevents invalid state
 // transitions (such as clocking in when already clocked in). All operations validate the
@@ -533,6 +533,82 @@ func addClockInOutPair(app *pocketbase.PocketBase, clockInTimestamp, clockOutTim
 
 	if err != nil {
 		return fmt.Errorf("failed to add clock in/out pair: %w", err)
+	}
+
+	return nil
+}
+
+// addManyWorkClockRecords creates multiple clock in and clock out records with the specified timestamps.
+// This is useful for bulk importing or migrating historical work time data from another system.
+// All records are validated to ensure they maintain proper sequence with existing records.
+//
+// Parameters:
+// - app: The PocketBase application instance
+// - clockInTimestamps: A slice of timestamps for the clock in records
+// - clockOutTimestamps: A slice of timestamps for the clock out records
+//
+// Returns:
+// - An error if the operation fails or if adding any of the records would violate sequence constraints
+//
+// The operation is performed within a single transaction to ensure data consistency and atomicity.
+// All records are created in the order provided in the slices, and each record is validated against
+// the existing records to ensure proper alternation of clock in/out states.
+// If any validation fails, the entire transaction is rolled back and no records are added.
+func addManyWorkClockRecords(app *pocketbase.PocketBase, clockInTimestamps, clockOutTimestamps []time.Time) error {
+	workClockMutex.Lock()
+	defer workClockMutex.Unlock()
+
+	err := app.RunInTransaction(func(txApp core.App) error {
+		collection, err := txApp.FindCollectionByNameOrId("work_clock")
+		if err != nil {
+			return fmt.Errorf("failed to find work clock collection: %w", err)
+		}
+
+		clockInRecordIDs := make([]string, len(clockInTimestamps))
+
+		for i, clockInTimestamp := range clockInTimestamps {
+			record := core.NewRecord(collection)
+			record.Set("timestamp", clockInTimestamp)
+			record.Set("clock_in", true)
+
+			if err := txApp.Save(record); err != nil {
+				return fmt.Errorf("failed to save clock in record at time '%s': %w", clockInTimestamp.Format(time.RFC3339), err)
+			}
+
+			clockInRecordIDs[i] = record.Id
+		}
+
+		clockOutRecordIDs := make([]string, len(clockOutTimestamps))
+
+		for i, clockOutTimestamp := range clockOutTimestamps {
+			record := core.NewRecord(collection)
+			record.Set("timestamp", clockOutTimestamp)
+			record.Set("clock_in", false)
+
+			if err := txApp.Save(record); err != nil {
+				return fmt.Errorf("failed to save clock out record at time '%s': %w", clockOutTimestamp.Format(time.RFC3339), err)
+			}
+
+			clockOutRecordIDs[i] = record.Id
+		}
+
+		for i, recordID := range clockInRecordIDs {
+			if err := checkValidity(txApp, recordID); err != nil {
+				return fmt.Errorf("added clock in record at time '%s' is not valid: %w", clockInTimestamps[i].Format(time.RFC3339), err)
+			}
+		}
+
+		for i, recordID := range clockOutRecordIDs {
+			if err := checkValidity(txApp, recordID); err != nil {
+				return fmt.Errorf("added clock out record at time '%s' is not valid: %w", clockOutTimestamps[i].Format(time.RFC3339), err)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to add multiple work clock records: %w", err)
 	}
 
 	return nil
