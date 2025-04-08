@@ -334,6 +334,7 @@ func deleteClockInOutPair(app *pocketbase.PocketBase, clockInID string) error {
 // - Clock out records are followed by clock in records
 // - Clock in records are preceded by clock out records
 // - Clock out records are preceded by clock in records
+// - The first work clock record cannot be a clock out record
 //
 // This function is crucial for maintaining data integrity when adding, modifying, or deleting records.
 //
@@ -383,6 +384,10 @@ func checkValidity(app core.App, workClockID string) error {
 		} else {
 			return fmt.Errorf("expected the preceding work clock record with id '%s' to be a clock in record", precedingRecords[0].Id)
 		}
+	}
+
+	if len(precedingRecords) == 0 && !record.GetBool("clock_in") {
+		return fmt.Errorf("expected the work clock record with id '%s' to be a clock in record since the first work clock record cannot be a clock out record", workClockID)
 	}
 
 	return nil
