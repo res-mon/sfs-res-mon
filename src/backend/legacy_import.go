@@ -37,7 +37,7 @@ type ActivityLog struct {
 func RegisterLegacyImportAPI(app *pocketbase.PocketBase) {
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		se.Router.POST("/api/legacy_import", func(e *core.RequestEvent) error {
-			return handleLegacyImportPost(app, e.Request, e.Response)
+			return handleLegacyImportPost(app, e)
 		})
 		return se.Next()
 	})
@@ -53,49 +53,40 @@ func RegisterLegacyImportAPI(app *pocketbase.PocketBase) {
 // - resp: The HTTP response writer to return results to the client
 //
 // Returns an error if any part of the import process fails.
-func handleLegacyImportPost(app *pocketbase.PocketBase, req *http.Request, resp http.ResponseWriter) error {
+func handleLegacyImportPost(app *pocketbase.PocketBase, e *core.RequestEvent) error {
 	// Max upload size of 50MB
 	const maxUploadSize = 50 * 1024 * 1024
-	req.Body = http.MaxBytesReader(resp, req.Body, maxUploadSize)
+	e.Request.Body = http.MaxBytesReader(e.Response, e.Request.Body, maxUploadSize)
 
 	// Parse the multipart form (max 50MB in memory)
-	if err := req.ParseMultipartForm(maxUploadSize); err != nil {
-		resp.WriteHeader(http.StatusBadRequest)
-		resp.Write([]byte("File too large or invalid multipart form"))
-		return err
+	if err := e.Request.ParseMultipartForm(maxUploadSize); err != nil {
+		return e.Error(http.StatusBadRequest, "File too large or invalid multipart form", err)
 	}
 
 	// Get the uploaded file
-	file, header, err := req.FormFile("database")
+	file, header, err := e.Request.FormFile("database")
 	if err != nil {
-		resp.WriteHeader(http.StatusBadRequest)
-		resp.Write([]byte("Failed to get uploaded file"))
-		return err
+		return e.Error(http.StatusBadRequest, "Failed to get uploaded file", err)
 	}
 	defer file.Close()
 
 	// Check file extension (optional, can be removed if any file type is acceptable)
 	if filepath.Ext(header.Filename) != ".db" {
-		resp.WriteHeader(http.StatusBadRequest)
-		resp.Write([]byte("Only .db files are allowed"))
-		return fmt.Errorf("invalid file extension: %s", filepath.Ext(header.Filename))
+		return e.Error(http.StatusBadRequest, "Only .db files are allowed",
+			fmt.Errorf("invalid file extension: %s", filepath.Ext(header.Filename)))
 	}
 
 	// Create a temporary directory
 	tempDir, err := os.MkdirTemp("", "legacy_import_*")
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte("Failed to create temporary directory"))
-		return err
+		return e.Error(http.StatusInternalServerError, "Failed to create temporary directory", err)
 	}
 
 	// Create a new file in the temp directory
 	tempFilePath := filepath.Join(tempDir, header.Filename)
 	tempFile, err := os.Create(tempFilePath)
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte("Failed to create temporary file"))
-		return err
+		return e.Error(http.StatusInternalServerError, "Failed to create temporary file", err)
 	}
 	defer os.Remove(tempFilePath) // Clean up the temp file after processing
 	defer tempFile.Close()
@@ -103,45 +94,30 @@ func handleLegacyImportPost(app *pocketbase.PocketBase, req *http.Request, resp 
 	// Copy the uploaded file to the temporary file
 	_, err = io.Copy(tempFile, file)
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte("Failed to save uploaded file"))
-		return err
+		return e.Error(http.StatusInternalServerError, "Failed to save uploaded file", err)
 	}
 
 	// Read activity logs from the database
 	activityLogs, err := readActivityLogs(tempFilePath)
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(fmt.Sprintf("Failed to read activity logs: %v", err)))
-		return err
+		return e.Error(http.StatusInternalServerError,
+			fmt.Sprintf("Failed to read activity logs: %v", err), err)
 	}
 
 	// Import activity logs into the PocketBase collection
 	err = importActivityLogs(app, activityLogs)
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(fmt.Sprintf("Failed to import activity logs: %v", err)))
-		return err
+		return e.Error(http.StatusInternalServerError,
+			fmt.Sprintf("Failed to import activity logs: %v", err), err)
 	}
 
-	// Convert activity logs to JSON and return
-	respData := map[string]interface{}{
+	// Return success response
+	e.Response.Header().Set("Content-Type", "application/json")
+	e.Response.WriteHeader(http.StatusOK)
+	return json.NewEncoder(e.Response).Encode(map[string]interface{}{
 		"success": true,
 		"message": "File uploaded and processed successfully",
-	}
-
-	jsonResp, err := json.Marshal(respData)
-	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte("Failed to generate response"))
-		return err
-	}
-
-	resp.Header().Set("Content-Type", "application/json")
-	resp.WriteHeader(http.StatusOK)
-	resp.Write(jsonResp)
-
-	return nil
+	})
 }
 
 // readActivityLogs reads activity logs from a SQLite database file.
