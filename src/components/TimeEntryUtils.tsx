@@ -275,11 +275,28 @@ export function processTimeEntries(entries: TimeStampEntry[]): DailyRecord[] {
 }
 
 /**
- * Format time for display (HH:MM:SS)
+ * Format time for display (DD Tage, HH:MM:SS or HH:MM:SS)
+ * Converts milliseconds timestamp to a formatted time string
+ * If the duration includes days, it will show "X Tage, HH:MM:SS"
+ * Otherwise, it will just show "HH:MM:SS"
  */
 export const formatTimeForDisplay = (timestamp: number): string => {
-  const date = new Date(timestamp);
-  return format(date, "HH:mm:ss");
+  // Calculate time components from milliseconds
+  const totalSeconds = Math.floor(timestamp / 1000);
+  const days = Math.floor(totalSeconds / 86400); // 86400 = seconds in a day
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  // Format hours, minutes and seconds with padding
+  const timeString = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+  // Add days if present
+  if (days > 0) {
+    return `${days} Tage, ${timeString}`;
+  }
+
+  return timeString;
 };
 
 /**
