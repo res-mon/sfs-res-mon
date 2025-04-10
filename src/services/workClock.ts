@@ -89,22 +89,22 @@ function parseTimeStampEntry(
 }
 
 /**
- * Deletes a time entry by its ID
+ * Deletes a time entry (pair) by its clock in ID
  *
- * @param id - The unique identifier of the time entry to delete
+ * @param clockInId - The unique identifier of the clock in time entry to delete
  * @returns An Effect that yields true if successful, or fails with DeleteRecordError
  * @example
- * // Delete a time entry
+ * // Delete a time entry (pair)
  * const result = await Effect.runPromise(deleteTimeEntry("record123"));
  */
 export function deleteTimeEntry(
-  id: string,
+  clockInId: string,
 ): Effect.Effect<boolean, DeleteRecordError> {
   return Effect.tryPromise({
     try: async () => {
       // Create FormData with the clock_in_id parameter
       const formData = new FormData();
-      formData.append("clock_in_id", id);
+      formData.append("clock_in_id", clockInId);
 
       // Use the validated API endpoint
       const response = await fetch("/api/work_clock/delete", {
@@ -122,12 +122,12 @@ export function deleteTimeEntry(
     },
     catch: (error) => {
       console.error(
-        "Unexpected error occurred while deleting time entry:",
+        "Unexpected error occurred while deleting time entry (pair):",
         error,
       );
       return {
         type: "deleteRecord",
-        message: `Failed to delete the time entry with id: "${id}".`,
+        message: `Failed to delete the time entry with clock in id: "${clockInId}".`,
       } as DeleteRecordError;
     },
   });
