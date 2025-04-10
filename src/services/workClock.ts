@@ -449,7 +449,7 @@ export function uploadLegacyDatabase(
  *
  * @interface TimeEntriesStream
  * @property {Accessor<boolean>} loading - Reactive signal indicating if data is being loaded
- * @property {Accessor<TimeStampEntry[]>} entries - Reactive signal containing the current entries
+ * @property {Accessor<TimeStampEntry[]>} entries - Reactive signal containing the current entries sorted by oldest first
  * @property {Accessor<GetTimeEntriesStreamError | undefined>} error - Reactive signal containing any error that occurred
  * @property {() => undefined | GetTimeEntriesStreamError} subscribe - Function to subscribe to real-time updates
  * @property {() => void} unsubscribe - Function to unsubscribe from real-time updates

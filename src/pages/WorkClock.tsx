@@ -103,14 +103,12 @@ const WorkClock: Component = (): JSX.Element => {
   /**
    * Process time entries to determine if the user is currently clocked in
    *
-   * @param {TimeStampEntry[]} entries - The list of time entries to process
+   * @param {TimeStampEntry[]} entries - The list of time entries to process sorted by oldest first.
    */
   const processTimeRecord = (entries: TimeStampEntry[]) => {
     if (entries.length > 0) {
       // Most recent entry first
-      const latestEntry = entries.sort(
-        (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
-      )[0];
+      const latestEntry = entries[entries.length - 1];
 
       setIsClockedIn(latestEntry.clock_in);
       setLastAction(latestEntry.timestamp);
