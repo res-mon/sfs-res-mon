@@ -8,9 +8,10 @@
  */
 import { RecordModel } from "pocketbase";
 
-import { Schema } from "effect";
+import { Effect, Schema } from "effect";
+import { ParseError as EffectParseError } from "effect/ParseResult";
 
-import pb from "./pocketBase";
+import pb, { Error } from "./pocketBase";
 
 type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
@@ -33,6 +34,17 @@ export const workClockSchema = Schema.Struct({
  * Necessary for PocketBase interaction where we need to update fields
  */
 type WorkClockSchema = Writeable<typeof workClockSchema.Type>;
+
+/**
+ * Error type for schema validation failures
+ * Used to wrap Effect's parse errors with our application's error format
+ *
+ * @extends {Error<"parseError">}
+ * @property {EffectParseError} [innerError] - The original Effect validation error for additional context
+ */
+export type ParseError = Error<"parseError"> & {
+  innerError?: EffectParseError;
+};
 
 /**
  * WorkClockRecord interface
@@ -60,4 +72,32 @@ export interface WorkClockRecord extends RecordModel, WorkClockSchema {
  */
 export function workClock() {
   return pb.collection<WorkClockRecord>("work_clock");
+}
+
+/**
+ * Validates a WorkClockRecord against the defined schema
+ * This function ensures that data conforms to the expected structure before processing
+ *
+ * @param {WorkClockRecord} value - The work clock record to validate
+ * @returns {Effect.Effect<WorkClockSchema, ParseError, never>} An Effect that yields the validated schema or fails with ParseError
+ * @example
+ * // Validates a work clock record and handles any validation errors
+ * pipe(
+ *   validateWorkClock(record),
+ *   Effect.map(validatedRecord => // work with valid record),
+ *   Effect.catchTag("parseError", error => // handle validation failure)
+ * )
+ */
+export function validateWorkClock(
+  value: WorkClockRecord,
+): Effect.Effect<WorkClockSchema, ParseError, never> {
+  return Effect.mapError(
+    Schema.validate(workClockSchema)(value),
+    (error) =>
+      ({
+        type: "parseError",
+        message: "Failed to validate work clock record",
+        innerError: error,
+      }) as ParseError,
+  );
 }

@@ -10,36 +10,56 @@ import { Component, Show } from "solid-js";
 
 import { Effect } from "effect";
 
-import { TimeStampEntry, addClockEntry } from "../services/workClock";
+import { addClockEntry } from "../services/workClock";
 import { getRelativeTime } from "./TimeEntryUtils";
 
+/**
+ * Props interface for the ClockStatusCard component
+ *
+ * @interface ClockStatusCardProps
+ * @property {boolean} isLoading - Whether data is currently being loaded
+ * @property {boolean} isClockedIn - Whether the user is currently clocked in
+ * @property {Date | null} lastAction - Timestamp of the last clock action, or null if none
+ * @property {string} currentSessionTime - Duration of the current session formatted as HH:MM:SS
+ * @property {string} todayTotalTime - Total time worked today formatted as HH:MM:SS
+ */
 interface ClockStatusCardProps {
   isLoading: boolean;
   isClockedIn: boolean;
   lastAction: Date | null;
   currentSessionTime: string;
   todayTotalTime: string;
-  onClockToggle: (newEntry: TimeStampEntry) => void;
 }
 
 /**
  * ClockStatusCard component
  *
- * Displays the current clock-in status and provides a button to clock in/out
+ * Displays the current clock-in status and provides controls for time tracking
+ * This component:
+ * 1. Shows the current clock-in/out status
+ * 2. Displays real-time session duration when clocked in
+ * 3. Shows the total time worked today
+ * 4. Provides a button to toggle between clocked-in and clocked-out states
+ * 5. Shows a loading state while data is being retrieved
+ *
+ * @param {ClockStatusCardProps} props - Properties for the component
+ * @returns {JSX.Element} The rendered component
  */
 const ClockStatusCard: Component<ClockStatusCardProps> = (props) => {
+  /**
+   * Toggles the current clock state between clocked in and clocked out
+   * Creates a new time entry with the opposite state of the current one
+   */
   const toggleClock = () => {
     const now = new Date();
     const isCurrentlyClockedIn = props.isClockedIn;
 
     // Call PocketBase to add a new clock entry
-    Effect.runPromise(addClockEntry(!isCurrentlyClockedIn, now))
-      .then((newEntry) => {
-        props.onClockToggle(newEntry);
-      })
-      .catch((error) => {
+    Effect.runPromise(addClockEntry(!isCurrentlyClockedIn, now)).catch(
+      (error) => {
         console.error("Error toggling clock:", error);
-      });
+      },
+    );
   };
 
   return (

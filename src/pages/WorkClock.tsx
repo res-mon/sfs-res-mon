@@ -1,3 +1,4 @@
+import AlertCircleIcon from "~icons/tabler/alert-circle";
 import ArrowsLeftRightIcon from "~icons/tabler/arrows-left-right";
 import EnergyIcon from "~icons/tabler/bulb";
 import CalendarIcon from "~icons/tabler/calendar";
@@ -19,8 +20,6 @@ import {
   onMount,
 } from "solid-js";
 
-import { Effect } from "effect";
-
 import ActivityHeatmap from "../components/ActivityHeatmap";
 import CircularTimeDisplay from "../components/CircularTimeDisplay";
 import ClockStatusCard from "../components/ClockStatusCard";
@@ -37,24 +36,40 @@ import {
 import TimelineView from "../components/TimelineView";
 import WeekPattern from "../components/WeekPattern";
 import WorkJourney from "../components/WorkJourney";
-import { TimeStampEntry, getTimeEntries } from "../services/workClock";
+import { TimeStampEntry, getTimeEntriesStream } from "../services/workClock";
 import { ObserverProvider } from "./Layout";
 
+/**
+ * WorkClock Component
+ *
+ * Main page component for the time tracking functionality.
+ * This component:
+ * 1. Manages the work clock state and UI interactions
+ * 2. Displays various visualizations of time data
+ * 3. Allows users to clock in and out
+ * 4. Provides multiple data visualization options through tabs
+ *
+ * @returns {JSX.Element} The rendered component
+ */
 const WorkClock: Component = (): JSX.Element => {
   // Store reference to PocketBase entries in local state
-  const [timeEntries, setTimeEntries] = createSignal<TimeStampEntry[]>([]);
   const [dailyRecords, setDailyRecords] = createSignal<DailyRecord[]>([]);
   const [currentSessionTime, setCurrentSessionTime] =
     createSignal<string>("00:00:00");
   const [todayTotalTime, setTodayTotalTime] = createSignal<string>("00:00:00");
-  const [isLoading, setIsLoading] = createSignal(true);
   const [isClockedIn, setIsClockedIn] = createSignal<boolean>(false);
   const [lastAction, setLastAction] = createSignal<Date | null>(null);
   const [currentTime, setCurrentTime] = createSignal<[number, number, number]>([
     0, 0, 0,
   ]);
 
-  // Track which visualization is active
+  // Get reactive time entries stream with real-time updates
+  const { loading, entries, error } = getTimeEntriesStream();
+
+  /**
+   * VisualType - Union type for the different visualization modes
+   * Controls which visualization component is rendered in the UI
+   */
   type VisualType =
     | "heatmap"
     | "clock"
@@ -85,7 +100,11 @@ const WorkClock: Component = (): JSX.Element => {
     return () => clearInterval(timeInterval);
   });
 
-  // Process today's record to check if user is clocked in
+  /**
+   * Process time entries to determine if the user is currently clocked in
+   *
+   * @param {TimeStampEntry[]} entries - The list of time entries to process
+   */
   const processTimeRecord = (entries: TimeStampEntry[]) => {
     if (entries.length > 0) {
       // Most recent entry first
@@ -98,31 +117,12 @@ const WorkClock: Component = (): JSX.Element => {
     }
   };
 
-  // Initialize from PocketBase
-  onMount(() => {
-    setIsLoading(true);
+  createEffect(() => {
+    const processed = processTimeEntries(entries());
+    setDailyRecords(processed);
 
-    // Fetch all time records from PocketBase
-    Effect.runPromise(getTimeEntries())
-      .then((entries) => {
-        setTimeEntries(entries);
-
-        // Process records for display
-        const processed = processTimeEntries(entries);
-        setDailyRecords(processed);
-
-        // Check if user is currently clocked in
-        processTimeRecord(entries);
-
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error(
-          "Fehler beim Laden der Zeiteinträge aus PocketBase:",
-          error,
-        );
-        setIsLoading(false);
-      });
+    // Check if user is currently clocked in
+    processTimeRecord(entries());
   });
 
   // Update current session time every second when clocked in
@@ -133,12 +133,15 @@ const WorkClock: Component = (): JSX.Element => {
       const elapsed = now.getTime() - lastAction()!.getTime();
       setCurrentSessionTime(formatDuration(elapsed));
       // Update the work history data in real-time when clocked in
-      setDailyRecords(processTimeEntries(timeEntries()));
+      setDailyRecords(processTimeEntries(entries()));
     }, 1000);
     return () => clearInterval(interval);
   });
 
-  // Calculate today's total time worked
+  /**
+   * Calculate the total time worked today
+   * Finds today's record in dailyRecords and updates the today total time signal
+   */
   const calculateTodayTotalTime = () => {
     const today = new Date().toISOString().split("T")[0];
     const todayRecord = dailyRecords().find((record) => record.date === today);
@@ -155,21 +158,12 @@ const WorkClock: Component = (): JSX.Element => {
     calculateTodayTotalTime();
   });
 
-  // Handle clock toggle events from the ClockStatusCard component
-  const handleClockToggle = (newEntry: TimeStampEntry) => {
-    // Update UI immediately for better user experience
-    setIsClockedIn(!isClockedIn());
-    setLastAction(newEntry.timestamp);
-
-    // Update local state by adding the new entry to our entries list
-    const updatedEntries = [...timeEntries(), newEntry];
-    setTimeEntries(updatedEntries);
-
-    // Process the updated entries to refresh the UI
-    setDailyRecords(processTimeEntries(updatedEntries));
-  };
-
-  // Handle day click in heatmap, journey view or calendar view
+  /**
+   * Handle day selection from various visualizations
+   * When a day is clicked in heatmap, journey view or calendar, this shows the daily detail view
+   *
+   * @param {string} date - The selected date in ISO format (YYYY-MM-DD)
+   */
   const handleDayClick = (date: string) => {
     setSelectedDate(date);
     setActiveVisual("clock");
@@ -244,6 +238,20 @@ const WorkClock: Component = (): JSX.Element => {
           </p>
         </div>
 
+        {/* Error Alert */}
+        <Show when={error() !== undefined}>
+          <div class="alert alert-error mx-auto max-w-4xl shadow-lg">
+            <AlertCircleIcon class="h-6 w-6" />
+            <div>
+              <h3 class="font-bold">Fehler beim Laden der Zeiteinträge</h3>
+              <div class="text-sm">
+                {error()?.message ?? "Unbekannter Fehler"}
+              </div>
+              <div class="text-xs opacity-70">Typ: {error()?.type}</div>
+            </div>
+          </div>
+        </Show>
+
         {/* Current Time Display with DaisyUI Countdown */}
         <div class="intersect:motion-preset-fade-in intersect-once mx-auto w-full">
           <div class="flex flex-col items-center justify-center">
@@ -277,12 +285,11 @@ const WorkClock: Component = (): JSX.Element => {
 
         {/* Clock In/Out Section */}
         <ClockStatusCard
-          isLoading={isLoading()}
+          isLoading={loading()}
           isClockedIn={isClockedIn()}
           lastAction={lastAction()}
           currentSessionTime={currentSessionTime()}
           todayTotalTime={todayTotalTime()}
-          onClockToggle={handleClockToggle}
         />
 
         {/* Visualization toggle buttons in a scrollable container */}
@@ -303,7 +310,7 @@ const WorkClock: Component = (): JSX.Element => {
         </div>
 
         {/* Visualizations */}
-        <Show when={!isLoading()}>
+        <Show when={!loading()}>
           <Show when={activeVisual() === "heatmap"}>
             <div class="intersect:motion-preset-fade-in intersect-once">
               <ActivityHeatmap

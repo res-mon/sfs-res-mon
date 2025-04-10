@@ -6,25 +6,33 @@
  * as well as providing a clean API for creating, retrieving, and deleting time entries.
  * All operations use Effect for predictable error handling.
  */
-import { ClientResponseError } from "pocketbase";
-
-import { Effect, Schema, pipe } from "effect";
-import { ParseError } from "effect/ParseResult";
+import { Accessor, createSignal } from "solid-js";
 
 import {
+  ClientResponseError,
+  RecordSubscription,
+  UnsubscribeFunc,
+} from "pocketbase";
+
+import { Cause, Effect, Exit, pipe } from "effect";
+
+import {
+  ParseError,
   WorkClockRecord,
+  validateWorkClock,
   workClock,
-  workClockSchema,
 } from "./pocketBase/collections";
 import {
   CreateRecordError,
   DateInvalidError,
   DateInvalidFormatError,
   DeleteRecordError,
+  type Error,
   GetFullRecordListError,
   assertRFC3339Date,
   dateToRFC3339,
   rfc3339ToDate,
+  wrapError,
 } from "./pocketBase/pocketBase";
 
 /**
@@ -59,7 +67,7 @@ function parseTimeStampEntry(
   value: WorkClockRecord,
 ): Effect.Effect<TimeStampEntry, ParseError | DateInvalidFormatError, never> {
   return pipe(
-    Schema.validate(workClockSchema)(value),
+    validateWorkClock(value),
     Effect.flatMap((record) =>
       pipe(
         rfc3339ToDate(record.timestamp),
@@ -381,4 +389,313 @@ export function uploadLegacyDatabase(
       };
     },
   });
+}
+
+/**
+ * TimeEntriesStream interface
+ * Represents a reactive stream of time entries with loading state and error handling
+ * Used for real-time updates of time entries from PocketBase
+ *
+ * @interface TimeEntriesStream
+ * @property {Accessor<boolean>} loading - Reactive signal indicating if data is being loaded
+ * @property {Accessor<TimeStampEntry[]>} entries - Reactive signal containing the current entries
+ * @property {Accessor<GetTimeEntriesStreamError | undefined>} error - Reactive signal containing any error that occurred
+ * @property {() => undefined | GetTimeEntriesStreamError} subscribe - Function to subscribe to real-time updates
+ * @property {() => void} unsubscribe - Function to unsubscribe from real-time updates
+ */
+type TimeEntriesStream = {
+  loading: Accessor<boolean>;
+  entries: Accessor<TimeStampEntry[]>;
+  error: Accessor<GetTimeEntriesStreamError | undefined>;
+  subscribe: () => undefined | GetTimeEntriesStreamError;
+  unsubscribe: () => void;
+};
+
+/**
+ * Error type for when an attempt is made to subscribe to a stream that was already subscribed
+ *
+ * @extends {Error<"entriesStreamWasSubscribed">}
+ */
+type EntriesStreamWasSubscribedError = Error<"entriesStreamWasSubscribed">;
+
+/**
+ * Error type for invalid date filter parameters used in stream creation
+ *
+ * @extends {Error<"filterNotValid">}
+ */
+type FilterNotValidError = Error<"filterNotValid">;
+
+/**
+ * Union of possible error types returned by getTimeEntriesStream function
+ * Combines errors from getTimeEntries with stream-specific errors
+ */
+type GetTimeEntriesStreamError =
+  | GetTimeEntriesError
+  | EntriesStreamWasSubscribedError
+  | FilterNotValidError;
+
+/**
+ * Creates a reactive stream of time entries with real-time updates from PocketBase
+ *
+ * This function provides a reactive interface for time entries that:
+ * 1. Loads initial data from the specified date range
+ * 2. Automatically subscribes to real-time updates (if autoSubscribe is true)
+ * 3. Maintains a sorted array of entries as changes occur
+ * 4. Provides reactive signals for loading state, entries, and errors
+ *
+ * @param {Date} [from] - Optional start date for filtering entries (inclusive)
+ * @param {Date} [until] - Optional end date for filtering entries (exclusive)
+ * @param {boolean} [autoSubscribe=true] - Whether to automatically subscribe to real-time updates
+ * @returns {TimeEntriesStream} A stream object with reactive signals and subscription control methods
+ * @example
+ * // Create a stream for all entries with auto-subscription
+ * const stream = getTimeEntriesStream();
+ *
+ * // Create a stream for a specific date range without auto-subscription
+ * const startDate = new Date('2025-03-01');
+ * const endDate = new Date('2025-03-31');
+ * const stream = getTimeEntriesStream(startDate, endDate, false);
+ *
+ * // Manually subscribe later
+ * stream.subscribe();
+ *
+ * // Access the reactive entries
+ * const entries = stream.entries();
+ *
+ * // Clean up when done
+ * stream.unsubscribe();
+ */
+export function getTimeEntriesStream(
+  from?: Date,
+  until?: Date,
+  autoSubscribe = true,
+): TimeEntriesStream {
+  const timeStampEntryArray: TimeStampEntry[] = [];
+  const subscriptionEvents: RecordSubscription<WorkClockRecord>[] = [];
+
+  let subscription: Promise<UnsubscribeFunc> | undefined;
+  let isSubscribed = false;
+  let isLoading = false;
+
+  const [loadingSignal, setLoadingSignal] = createSignal(isLoading);
+  const [entries, setEntries] = createSignal<TimeStampEntry[]>([]);
+  const [error, setError] = createSignal<GetTimeEntriesStreamError | undefined>(
+    undefined,
+  );
+
+  const setLoading = (loading: boolean) => {
+    isLoading = loading;
+    setLoadingSignal(loading);
+  };
+
+  // Sort by date (oldest first)
+  const sortTimeStampEntries = () => {
+    timeStampEntryArray.sort((a, b) => {
+      return a.timestamp.getTime() - b.timestamp.getTime();
+    });
+  };
+
+  const updateTimeStampEntries = (
+    method: "create" | "update" | "delete",
+    entry: TimeStampEntry,
+  ) => {
+    switch (method) {
+      case "create": {
+        if (
+          timeStampEntryArray.length === 0 ||
+          entry.timestamp.getTime() >
+            timeStampEntryArray[
+              timeStampEntryArray.length - 1
+            ].timestamp.getTime()
+        ) {
+          // If the new entry is the most recent, add it to the end
+          timeStampEntryArray.push(entry);
+        } else if (
+          entry.timestamp.getTime() < timeStampEntryArray[0].timestamp.getTime()
+        ) {
+          // If the new entry is the oldest, add it to the beginning
+          timeStampEntryArray.unshift(entry);
+        } else {
+          // Otherwise, find the correct position to insert it
+          const index = timeStampEntryArray.findIndex(
+            (e) => e.timestamp.getTime() > entry.timestamp.getTime(),
+          );
+          if (index === -1) {
+            // If no larger entry is found, push it to the end
+            timeStampEntryArray.push(entry);
+          } else {
+            timeStampEntryArray.splice(index, 0, entry);
+          }
+        }
+        break;
+      }
+      case "update": {
+        // Find the entry to update
+        const index = timeStampEntryArray.findIndex((e) => e.id === entry.id);
+        if (index !== -1) {
+          // Update the entry in the array
+          timeStampEntryArray[index] = entry;
+        } else {
+          // If the entry is not found, add it to the array
+          timeStampEntryArray.push(entry);
+        }
+        // Sort the array after updating
+        sortTimeStampEntries();
+        break;
+      }
+      case "delete": {
+        // Remove the entry from the array
+        const index = timeStampEntryArray.findIndex((e) => e.id === entry.id);
+        if (index !== -1) {
+          timeStampEntryArray.splice(index, 1);
+        }
+        break;
+      }
+      default:
+        const _missing: never = method;
+    }
+  };
+
+  const processSubscriptionEvent = (
+    event: RecordSubscription<WorkClockRecord>,
+    update = true,
+  ) => {
+    const parseResult = Effect.runSyncExit(parseTimeStampEntry(event.record));
+    Exit.match(parseResult, {
+      onFailure: (cause) => {
+        const errorMessage = "Could not parse the subscription event record:";
+        if (Cause.isFailType(cause)) {
+          setError(wrapError(errorMessage, cause.error));
+        } else {
+          setError({
+            type: "parseError",
+            message: errorMessage + " " + Cause.pretty(cause),
+          } as ParseError);
+        }
+      },
+      onSuccess: (entry) => {
+        updateTimeStampEntries(
+          event.action as "create" | "update" | "delete",
+          entry,
+        );
+
+        if (update) {
+          setEntries([...timeStampEntryArray]);
+        }
+      },
+    });
+  };
+
+  const subscribe = (): undefined | GetTimeEntriesStreamError => {
+    if (isSubscribed) {
+      return undefined;
+    }
+    if (subscription != null) {
+      const error = {
+        type: "entriesStreamWasSubscribed",
+        message: "Entries stream was already subscribed.",
+      } as EntriesStreamWasSubscribedError;
+
+      setError(error);
+      return error;
+    }
+
+    const filterExit = Effect.runSyncExit(betweenFilter(from, until));
+
+    let filterValue = "";
+    let error: GetTimeEntriesStreamError | undefined;
+
+    Exit.match(filterExit, {
+      onFailure: (cause) => {
+        const errorMessage =
+          "The provided filter parameters (from and until) are not valid:";
+
+        if (Cause.isFailType(cause)) {
+          error = wrapError(errorMessage, cause.error);
+        } else {
+          error = {
+            type: "filterNotValid",
+            message: errorMessage + " " + Cause.pretty(cause),
+          } as FilterNotValidError;
+        }
+
+        setError(error);
+      },
+      onSuccess: (value) => {
+        filterValue = value;
+      },
+    });
+
+    // If we had an error, return early
+    if (error != null) {
+      return error;
+    }
+
+    isSubscribed = true;
+
+    subscription = workClock().subscribe(
+      "*",
+      (e) => {
+        if (isLoading) {
+          subscriptionEvents.push(e);
+        } else {
+          processSubscriptionEvent(e);
+        }
+      },
+      {
+        filter: filterValue,
+      },
+    );
+
+    return undefined;
+  };
+
+  const unsubscribe = (): void => {
+    if (!isSubscribed || subscription == null) {
+      return;
+    }
+    isSubscribed = false;
+
+    setLoading(false);
+
+    void subscription.then((unsubscribe) => unsubscribe());
+  };
+
+  Effect.runPromise(
+    Effect.gen(function* () {
+      setError(undefined);
+      setLoading(true);
+      setEntries([]);
+
+      if (autoSubscribe) {
+        const err = subscribe();
+        if (err) {
+          setError(err);
+          return;
+        }
+      }
+
+      const currentEntries = yield* getTimeEntries(from, until);
+      timeStampEntryArray.push(...currentEntries);
+      sortTimeStampEntries();
+
+      for (const entry of subscriptionEvents) {
+        processSubscriptionEvent(entry, false);
+      }
+
+      setEntries([...timeStampEntryArray]);
+      setLoading(false);
+    }) as Effect.Effect<TimeEntriesStream, GetTimeEntriesStreamError>,
+  ).catch((err) => {
+    setLoading(false);
+    setError(err as GetTimeEntriesStreamError);
+  });
+
+  return {
+    loading: loadingSignal,
+    entries,
+    error,
+    subscribe,
+    unsubscribe,
+  };
 }

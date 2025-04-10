@@ -28,6 +28,35 @@ export type Error<T extends string> = {
 };
 
 /**
+ * Wraps an existing error with additional context by prepending and/or appending text to the error message
+ * This function maintains the original error type while enriching the message with more context
+ *
+ * @template TErrorType - String literal type identifying the specific error
+ * @template TError - The error type extending Error<TErrorType>
+ * @param {string} [prependMessage=""] - Text to prepend to the error message
+ * @param {TError} error - The original error object to wrap
+ * @param {string} [appendMessage=""] - Text to append to the error message
+ * @returns {TError} A new error object with the same type but modified message
+ * @example
+ * // Returns { type: "dateInvalid", message: "Failed to process date: The provided date is invalid. Please try again." }
+ * wrapError(
+ *   "Failed to process date:",
+ *   { type: "dateInvalid", message: "The provided date is invalid." },
+ *   "Please try again."
+ * )
+ */
+export function wrapError<
+  TErrorType extends string,
+  TError extends Error<TErrorType>,
+>(prependMessage = "", error: TError, appendMessage = ""): TError {
+  const message = `${prependMessage ? prependMessage + " " : ""}${error.message}${appendMessage ? " " + appendMessage : ""}`;
+  return {
+    ...error,
+    message,
+  };
+}
+
+/**
  * Extended error type that wraps PocketBase ClientResponseError
  * Used for errors that occur during PocketBase API operations
  *
