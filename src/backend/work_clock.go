@@ -546,11 +546,11 @@ func createWorkClockRecord(app core.App, collection *core.Collection, timestamp 
 	record.Set("clock_in", clockIn)
 
 	if err := app.Save(record); err != nil {
-		existingRecord, err := app.FindFirstRecordByFilter(collection, "timestamp = {:timestamp} && clock_in = {:clockIn}", dbx.Params{
-			"timestamp": timestamp,
-			"clockIn":   clockIn,
+		existingRecord, existingErr := app.FindFirstRecordByFilter(collection, "timestamp = {:timestamp} && clock_in = {:clockIn}", dbx.Params{
+			"timestamp": record.GetDateTime("timestamp"),
+			"clockIn":   record.GetBool("clock_in"),
 		})
-		if err == nil && existingRecord != nil {
+		if existingErr == nil && existingRecord != nil {
 			return existingRecord, nil
 		}
 
