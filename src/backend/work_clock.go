@@ -258,16 +258,9 @@ func clockInOut(app *pocketbase.PocketBase, clockIn bool) error {
 		return fmt.Errorf("already clocked %s", map[bool]string{true: "in", false: "out"}[isClockedIn])
 	}
 
-	collection, err := app.FindCollectionByNameOrId("work_clock")
+	_, err = createWorkClockRecord(app, nil, time.Now(), clockIn)
 	if err != nil {
-		return fmt.Errorf("failed to find work clock collection: %w", err)
-	}
-	record := core.NewRecord(collection)
-	record.Set("timestamp", time.Now())
-	record.Set("clock_in", clockIn)
-
-	if err := app.Save(record); err != nil {
-		return fmt.Errorf("failed to save work clock record: %w", err)
+		return fmt.Errorf("failed to create work clock record: %w", err)
 	}
 
 	return nil
@@ -453,16 +446,9 @@ func clockInOutAt(app *pocketbase.PocketBase, clockIn bool, timestamp time.Time)
 	defer workClockMutex.Unlock()
 
 	err := app.RunInTransaction(func(txApp core.App) error {
-		collection, err := txApp.FindCollectionByNameOrId("work_clock")
+		record, err := createWorkClockRecord(txApp, nil, timestamp, clockIn)
 		if err != nil {
-			return fmt.Errorf("failed to find work clock collection: %w", err)
-		}
-		record := core.NewRecord(collection)
-		record.Set("timestamp", timestamp)
-		record.Set("clock_in", clockIn)
-
-		if err := txApp.Save(record); err != nil {
-			return fmt.Errorf("failed to save work clock record: %w", err)
+			return fmt.Errorf("failed to create work clock record: %w", err)
 		}
 
 		if err := checkValidity(txApp, record.Id); err != nil {
@@ -504,20 +490,14 @@ func addClockInOutPair(app *pocketbase.PocketBase, clockInTimestamp, clockOutTim
 			return fmt.Errorf("failed to find work clock collection: %w", err)
 		}
 
-		clockInRecord := core.NewRecord(collection)
-		clockInRecord.Set("timestamp", clockInTimestamp)
-		clockInRecord.Set("clock_in", true)
-
-		if err := txApp.Save(clockInRecord); err != nil {
-			return fmt.Errorf("failed to save clock in record: %w", err)
+		clockInRecord, err := createWorkClockRecord(txApp, collection, clockInTimestamp, true)
+		if err != nil {
+			return fmt.Errorf("failed to create clock in record: %w", err)
 		}
 
-		clockOutRecord := core.NewRecord(collection)
-		clockOutRecord.Set("timestamp", clockOutTimestamp)
-		clockOutRecord.Set("clock_in", false)
-
-		if err := txApp.Save(clockOutRecord); err != nil {
-			return fmt.Errorf("failed to save clock out record: %w", err)
+		clockOutRecord, err := createWorkClockRecord(txApp, collection, clockOutTimestamp, false)
+		if err != nil {
+			return fmt.Errorf("failed to create clock out record: %w", err)
 		}
 
 		if err := checkValidity(txApp, clockInRecord.Id); err != nil {
@@ -536,6 +516,48 @@ func addClockInOutPair(app *pocketbase.PocketBase, clockInTimestamp, clockOutTim
 	}
 
 	return nil
+}
+
+// createWorkClockRecord creates a new work_clock record with the specified parameters.
+// This function centralizes the creation of work_clock records to eliminate code duplication.
+// If a record with the same timestamp and clock_in value already exists, it returns the existing
+// record instead of creating a duplicate.
+//
+// Parameters:
+// - app: The App interface (typically a PocketBase instance or transaction)
+// - collection: The work_clock collection (optional, can be nil)
+// - timestamp: The timestamp for the record
+// - clockIn: Boolean flag indicating whether this is a clock in (true) or clock out (false) record
+//
+// Returns:
+// - The newly created record or the existing record if a duplicate is found
+// - An error if the operation fails
+func createWorkClockRecord(app core.App, collection *core.Collection, timestamp time.Time, clockIn bool) (*core.Record, error) {
+	var err error
+	if collection == nil {
+		collection, err = app.FindCollectionByNameOrId("work_clock")
+		if err != nil {
+			return nil, fmt.Errorf("failed to find work clock collection: %w", err)
+		}
+	}
+
+	record := core.NewRecord(collection)
+	record.Set("timestamp", timestamp)
+	record.Set("clock_in", clockIn)
+
+	if err := app.Save(record); err != nil {
+		existingRecord, err := app.FindFirstRecordByFilter(collection, "timestamp = {:timestamp} && clock_in = {:clockIn}", dbx.Params{
+			"timestamp": timestamp,
+			"clockIn":   clockIn,
+		})
+		if err == nil && existingRecord != nil {
+			return existingRecord, nil
+		}
+
+		return nil, fmt.Errorf("failed to save work clock record: %w", err)
+	}
+
+	return record, nil
 }
 
 // addManyWorkClockRecords creates multiple clock in and clock out records with the specified timestamps.
@@ -567,12 +589,9 @@ func addManyWorkClockRecords(app *pocketbase.PocketBase, clockInTimestamps, cloc
 		clockInRecordIDs := make([]string, len(clockInTimestamps))
 
 		for i, clockInTimestamp := range clockInTimestamps {
-			record := core.NewRecord(collection)
-			record.Set("timestamp", clockInTimestamp)
-			record.Set("clock_in", true)
-
-			if err := txApp.Save(record); err != nil {
-				return fmt.Errorf("failed to save clock in record at time '%s': %w", clockInTimestamp.Format(time.RFC3339), err)
+			record, err := createWorkClockRecord(txApp, collection, clockInTimestamp, true)
+			if err != nil {
+				return fmt.Errorf("failed to create clock in record at time '%s': %w", clockInTimestamp.Format(time.RFC3339), err)
 			}
 
 			clockInRecordIDs[i] = record.Id
@@ -581,12 +600,9 @@ func addManyWorkClockRecords(app *pocketbase.PocketBase, clockInTimestamps, cloc
 		clockOutRecordIDs := make([]string, len(clockOutTimestamps))
 
 		for i, clockOutTimestamp := range clockOutTimestamps {
-			record := core.NewRecord(collection)
-			record.Set("timestamp", clockOutTimestamp)
-			record.Set("clock_in", false)
-
-			if err := txApp.Save(record); err != nil {
-				return fmt.Errorf("failed to save clock out record at time '%s': %w", clockOutTimestamp.Format(time.RFC3339), err)
+			record, err := createWorkClockRecord(txApp, collection, clockOutTimestamp, false)
+			if err != nil {
+				return fmt.Errorf("failed to create clock out record at time '%s': %w", clockOutTimestamp.Format(time.RFC3339), err)
 			}
 
 			clockOutRecordIDs[i] = record.Id
