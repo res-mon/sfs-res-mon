@@ -27,7 +27,7 @@
         "@typescript-eslint/eslint-plugin": "^8.29.1",
         "@typescript-eslint/parser": "^8.29.1",
         "@xstate/store": "^3.4.2",
-        "ag-grid-community": "^33.2.1",
+        "ag-grid-community": "^33.2.2",
         "daisyui": "^5.0.16",
         "date-fns": "^4.1.0",
         "effect": "^3.14.6",
@@ -443,9 +443,9 @@
 
     "acorn-jsx": ["acorn-jsx@5.3.2", "", { "peerDependencies": { "acorn": "^6.0.0 || ^7.0.0 || ^8.0.0" } }, "sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ=="],
 
-    "ag-charts-types": ["ag-charts-types@11.2.1", "", {}, "sha512-uzN1OUEn5nCFDZ4GTNkYHpg+6hbF+NamIwUOK/aSHBRvJxJU9/sK+K1QkqYpU912mHtpAZ9x0zEddr2sw6pT2Q=="],
+    "ag-charts-types": ["ag-charts-types@11.2.2", "", {}, "sha512-+L7Hr0rqAdnEbQO0mkDuDD05/ovX/zqZzVCCuvG3qdPSxLlUe4cJg1/gsMJdBH3etTn9jVMwo0FmDr9Vx7fwFQ=="],
 
-    "ag-grid-community": ["ag-grid-community@33.2.1", "", { "dependencies": { "ag-charts-types": "11.2.1" } }, "sha512-eQVRv+x8C3+T2weBux7Y+SN6IMs4lYJjTmNSfm/OX3ANH3GsscvqRiOxoV/R+hQWL7GUXOCLPZHFzZpzSdk0xg=="],
+    "ag-grid-community": ["ag-grid-community@33.2.2", "", { "dependencies": { "ag-charts-types": "11.2.2" } }, "sha512-AEB/nONdlxQaD3KTfgELr5GZsOw5xcSTEZ5TuqLRx3Fl3HqH4tFDXM2z4aQ4yXsEX4NRuWTx2V4YhR/Lp3Dw2g=="],
 
     "ajv": ["ajv@6.12.6", "", { "dependencies": { "fast-deep-equal": "^3.1.1", "fast-json-stable-stringify": "^2.0.0", "json-schema-traverse": "^0.4.1", "uri-js": "^4.2.2" } }, "sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g=="],
 
