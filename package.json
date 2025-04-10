@@ -73,7 +73,7 @@
     "import-sort-style-module": "^6.0.0",
     "lucide-solid": "^0.487.0",
     "nanostores": "^0.11.4",
-    "npm-check-updates": "^17.1.16",
+    "npm-check-updates": "^17.1.18",
     "pocketbase": "^0.25.2",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
