@@ -122,15 +122,15 @@ func handleLegacyImportPost(app *pocketbase.PocketBase, e *core.RequestEvent) er
 
 // readActivityLogs reads activity logs from a SQLite database file.
 //
+// It attempts to read data from both legacy formats: the 'activity_log' table
+// and the 'ActiveChanges' table, combining results from both if they exist.
+//
 // Parameters:
 // - dbPath: Path to the SQLite database file
 //
 // Returns:
 // - A slice of ActivityLog objects containing the extracted log data
-// - An error if the database could not be opened or queried
-//
-// The function expects the source database to have an activity_log table
-// with timestamp (nanoseconds since epoch) and active (integer boolean) columns.
+// - An error if the database could not be opened or queried, or if neither required table exists
 func readActivityLogs(dbPath string) ([]ActivityLog, error) {
 	// Open the SQLite database
 	db, err := sql.Open("sqlite", dbPath)
@@ -139,14 +139,57 @@ func readActivityLogs(dbPath string) ([]ActivityLog, error) {
 	}
 	defer db.Close()
 
+	var activityLogs []ActivityLog
+
+	// Check if the activity_log table exists and read from it
+	activityLogExists, err := readActivityLogTable(db, &activityLogs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read activity_log table: %w", err)
+	}
+
+	activeChangesExists, err := readActiveChangesTable(db, &activityLogs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read ActiveChanges table: %w", err)
+	}
+	if !activityLogExists && !activeChangesExists {
+		return nil, fmt.Errorf("no 'activity_log' or 'ActiveChanges' table found in the database")
+	}
+
+	return activityLogs, nil
+}
+
+// readActivityLogTable reads activity logs from the 'activity_log' table in a legacy SQLite database.
+//
+// This function checks if the 'activity_log' table exists and extracts records if found.
+// Each record is converted to the ActivityLog format and appended to the result slice.
+//
+// Parameters:
+// - db: An open SQLite database connection
+// - result: A pointer to the slice where ActivityLog entries will be appended
+//
+// Returns:
+// - A boolean indicating whether the table exists in the database
+// - An error if querying the database fails
+//
+// The function expects the table to have timestamp (nanoseconds since epoch)
+// and active (integer boolean) columns.
+func readActivityLogTable(db *sql.DB, result *[]ActivityLog) (bool, error) {
+	existsRows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table' AND name='activity_log';")
+	if err != nil {
+		return false, fmt.Errorf("failed to query existing tables: %w", err)
+	}
+	defer existsRows.Close()
+
+	if !existsRows.Next() {
+		return false, nil // Table does not exist
+	}
+
 	// Query all records from the activity_log table
 	rows, err := db.Query("SELECT timestamp, active FROM activity_log ORDER BY timestamp")
 	if err != nil {
-		return nil, fmt.Errorf("failed to query activity logs: %w", err)
+		return true, fmt.Errorf("failed to query activity logs: %w", err)
 	}
 	defer rows.Close()
-
-	var activityLogs []ActivityLog
 
 	// Iterate through the results
 	for rows.Next() {
@@ -155,7 +198,7 @@ func readActivityLogs(dbPath string) ([]ActivityLog, error) {
 
 		// Scan row into variables
 		if err := rows.Scan(&timestampNano, &activeInt); err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
+			return true, fmt.Errorf("failed to scan row: %w", err)
 		}
 
 		// Convert timestamp from nanoseconds to time.Time
@@ -165,7 +208,7 @@ func readActivityLogs(dbPath string) ([]ActivityLog, error) {
 		active := activeInt != 0
 
 		// Append to results
-		activityLogs = append(activityLogs, ActivityLog{
+		*result = append(*result, ActivityLog{
 			Timestamp: timestamp,
 			Active:    active,
 		})
@@ -173,10 +216,147 @@ func readActivityLogs(dbPath string) ([]ActivityLog, error) {
 
 	// Check for errors from iterating over rows
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", err)
+		return true, fmt.Errorf("error iterating rows: %w", err)
 	}
 
-	return activityLogs, nil
+	return true, nil
+}
+
+// readActiveChangesTable reads activity data from the 'ActiveChanges' table in a legacy SQLite database.
+//
+// This function checks if the 'ActiveChanges' table exists and extracts records if found.
+// The data is processed in groups to handle complex temporal relationships between entries
+// and deduplicate timestamp conflicts. Each valid entry is converted to the ActivityLog format
+// and appended to the result slice.
+//
+// Parameters:
+// - db: An open SQLite database connection
+// - result: A pointer to the slice where ActivityLog entries will be appended
+//
+// Returns:
+// - A boolean indicating whether the table exists in the database
+// - An error if querying the database fails
+//
+// The function expects the table to have Time (nanoseconds since epoch),
+// Active (integer boolean) and StartEnd (integer) columns.
+func readActiveChangesTable(db *sql.DB, result *[]ActivityLog) (bool, error) {
+	existsRows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table' AND name='ActiveChanges';")
+	if err != nil {
+		return false, fmt.Errorf("failed to query existing tables: %w", err)
+	}
+	defer existsRows.Close()
+
+	if !existsRows.Next() {
+		return false, nil // Table does not exist
+	}
+
+	// Query all records from the ActiveChanges table
+	rows, err := db.Query("SELECT Time, Active, StartEnd FROM ActiveChanges ORDER BY Time ASC, Active DESC, StartEnd DESC")
+	if err != nil {
+		return true, fmt.Errorf("failed to query active changes: %w", err)
+	}
+	defer rows.Close()
+
+	type ActiveChange struct {
+		Timestamp time.Time
+		Active    bool
+		IsSystem  bool
+	}
+
+	var activeChanges [][]ActiveChange
+	var activeChangesGroup []ActiveChange
+
+	// Iterate through the results
+	for rows.Next() {
+		var timestampNano int64
+		var activeInt int
+		var systemInt int
+
+		// Scan row into variables
+		if err := rows.Scan(&timestampNano, &activeInt, &systemInt); err != nil {
+			return true, fmt.Errorf("failed to scan row: %w", err)
+		}
+
+		entry := ActiveChange{
+			Timestamp: time.Unix(0, timestampNano),
+			Active:    activeInt != 0,
+			IsSystem:  systemInt != 0,
+		}
+
+		if len(activeChangesGroup) > 0 && entry.Active && entry.IsSystem {
+			activeChanges = append(activeChanges, activeChangesGroup)
+			activeChangesGroup = nil
+		}
+
+		activeChangesGroup = append(activeChangesGroup, entry)
+	}
+
+	if len(activeChangesGroup) > 0 {
+		activeChanges = append(activeChanges, activeChangesGroup)
+	}
+
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		return true, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	if len(activeChanges) == 0 {
+		return true, nil // No active changes found
+	}
+
+	timestamps := make(map[int64]int)
+
+	for x := 0; x < len(activeChanges); x++ {
+		if len(activeChanges[x]) == 0 {
+			continue
+		}
+
+		if x != len(activeChanges)-1 && activeChanges[x][len(activeChanges[x])-1].Active {
+			activeChanges[x][len(activeChanges[x])-1].Active = false
+		}
+
+		group := make([]ActiveChange, 0, len(activeChanges[x]))
+
+		for y := 0; y < len(activeChanges[x]); y++ {
+			if len(group) == 0 && !activeChanges[x][y].Active {
+				continue
+			}
+
+			if len(group) == 0 {
+				group = append(group, activeChanges[x][y])
+				continue
+			}
+
+			if group[len(group)-1].Active && activeChanges[x][y].Active {
+				continue
+			} else if !group[len(group)-1].Active && !activeChanges[x][y].Active {
+				group[len(group)-1] = activeChanges[x][y]
+			} else {
+				group = append(group, activeChanges[x][y])
+			}
+		}
+
+		for _, entry := range group {
+			timestamps[entry.Timestamp.UnixMilli()]++
+		}
+
+		activeChanges[x] = group
+	}
+
+	for _, group := range activeChanges {
+		for _, entry := range group {
+			if timestamps[entry.Timestamp.UnixMilli()] > 1 {
+				continue
+			}
+
+			*result = append(*result, ActivityLog{
+				Timestamp: entry.Timestamp,
+				Active:    entry.Active,
+			})
+		}
+	}
+
+	return true, nil
 }
 
 // importActivityLogs imports activity logs into the PocketBase work_clock collection.
