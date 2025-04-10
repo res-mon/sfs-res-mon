@@ -101,21 +101,34 @@ export function deleteTimeEntry(
   id: string,
 ): Effect.Effect<boolean, DeleteRecordError> {
   return Effect.tryPromise({
-    try: () => workClock().delete(id),
-    catch: (error) => {
-      const innerError =
-        error instanceof ClientResponseError ? error : undefined;
-      if (error != null && !innerError) {
-        console.error(
-          "Unexpected error occurred while deleting time entry:",
-          error,
+    try: async () => {
+      // Create FormData with the clock_in_id parameter
+      const formData = new FormData();
+      formData.append("clock_in_id", id);
+
+      // Use the validated API endpoint
+      const response = await fetch("/api/work_clock/delete", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Server returned ${response.status}: ${response.statusText}`,
         );
       }
+
+      return true;
+    },
+    catch: (error) => {
+      console.error(
+        "Unexpected error occurred while deleting time entry:",
+        error,
+      );
       return {
         type: "deleteRecord",
         message: `Failed to delete the time entry with id: "${id}".`,
-        innerError,
-      };
+      } as DeleteRecordError;
     },
   });
 }
@@ -265,28 +278,66 @@ export function addClockEntry(
   return pipe(
     dateToRFC3339(timestamp),
     Effect.flatMap((timestampStr) => {
-      // Prepare data for PocketBase
-      const data = {
-        timestamp: timestampStr,
-        clock_in: clockIn,
-      };
-
-      // Create the record in PocketBase
       return Effect.tryPromise({
-        try: () => workClock().create(data),
-        catch: (error) => {
-          const innerError =
-            error instanceof ClientResponseError ? error : undefined;
-          if (error != null && !innerError) {
-            console.error(
-              `Unexpected error occurred while adding ${clockIn ? "clock-in" : "clock-out"} entry with timestamp ${timestampStr}:`,
-              error,
+        try: async () => {
+          let response;
+
+          // Use the appropriate API endpoint based on whether this is a regular clock in/out
+          // or one with a specific timestamp
+          if (
+            timestamp === new Date() ||
+            Math.abs(timestamp.getTime() - new Date().getTime()) < 1000
+          ) {
+            // For current time, use the simpler API endpoints
+            if (clockIn) {
+              response = await fetch("/api/work_clock/clock_in", {
+                method: "GET",
+              });
+            } else {
+              response = await fetch("/api/work_clock/clock_out", {
+                method: "GET",
+              });
+            }
+          } else {
+            // For specific timestamps, use the clock_in_out_at endpoint
+            const formData = new FormData();
+            formData.append("clock_in", clockIn.toString());
+            formData.append("timestamp", timestampStr);
+
+            response = await fetch("/api/work_clock/clock_in_out_at", {
+              method: "POST",
+              body: formData,
+            });
+          }
+
+          if (!response.ok) {
+            throw new Error(
+              `Server returned ${response.status}: ${response.statusText}`,
             );
           }
+
+          // Since our API endpoint doesn't return the created record,
+          // we need to fetch the latest record that matches our criteria
+          const latestRecordsResponse = await workClock().getFullList({
+            sort: "-timestamp",
+            filter: `clock_in=${clockIn}`,
+            limit: 1,
+          });
+
+          if (latestRecordsResponse.length === 0) {
+            throw new Error("Could not find the newly created record");
+          }
+
+          return latestRecordsResponse[0];
+        },
+        catch: (error) => {
+          console.error(
+            `Unexpected error occurred while adding ${clockIn ? "clock-in" : "clock-out"} entry:`,
+            error,
+          );
           return {
             type: "createRecord",
-            message: `Failed to add ${clockIn ? "clock-in" : "clock-out"} entry with timestamp ${timestampStr}.`,
-            innerError,
+            message: `Failed to add ${clockIn ? "clock-in" : "clock-out"} entry.`,
           } as CreateRecordError;
         },
       });
