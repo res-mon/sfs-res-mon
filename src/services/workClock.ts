@@ -23,10 +23,8 @@ import {
   workClock,
 } from "./pocketBase/collections";
 import {
-  CreateRecordError,
   DateInvalidError,
   DateInvalidFormatError,
-  DeleteRecordError,
   type Error,
   GetFullRecordListError,
   assertRFC3339Date,
@@ -89,17 +87,35 @@ function parseTimeStampEntry(
 }
 
 /**
+ * Error type for failures when deleting time entries
+ *
+ * @typedef {Error<"deleteTimeEntry">} DeleteTimeEntryError
+ * @property {string} type - Always "deleteTimeEntry" to identify this error type
+ * @property {string} message - Human-readable error message describing the failure
+ * @property {Error} [innerError] - Optional underlying system error for debugging
+ */
+type DeleteTimeEntryError = Error<"deleteTimeEntry"> & {
+  innerError?: globalThis.Error;
+};
+
+/**
  * Deletes a time entry (pair) by its clock in ID
  *
- * @param clockInId - The unique identifier of the clock in time entry to delete
- * @returns An Effect that yields true if successful, or fails with DeleteRecordError
+ * This function deletes both a clock-in entry and its associated clock-out entry
+ * by sending a request to the server's `/api/work_clock/delete` endpoint.
+ *
+ * @param {string} clockInId - The unique identifier of the clock in time entry to delete
+ * @returns {Effect.Effect<boolean, DeleteTimeEntryError>} An Effect that yields true if successful, or fails with DeleteTimeEntryError
  * @example
  * // Delete a time entry (pair)
  * const result = await Effect.runPromise(deleteTimeEntry("record123"));
+ * if (Effect.isSuccess(result)) {
+ *   console.log("Time entry deleted successfully");
+ * }
  */
 export function deleteTimeEntry(
   clockInId: string,
-): Effect.Effect<boolean, DeleteRecordError> {
+): Effect.Effect<boolean, DeleteTimeEntryError> {
   return Effect.tryPromise({
     try: async () => {
       // Create FormData with the clock_in_id parameter
@@ -126,9 +142,10 @@ export function deleteTimeEntry(
         error,
       );
       return {
-        type: "deleteRecord",
+        type: "deleteTimeEntry",
         message: `Failed to delete the time entry with clock in id: "${clockInId}".`,
-      } as DeleteRecordError;
+        innerError: error instanceof Error ? error : undefined,
+      } as DeleteTimeEntryError;
     },
   });
 }
@@ -248,10 +265,20 @@ export function getTimeEntries(
 
 /**
  * Union of possible error types returned by addClockEntry function
+ *
+ * @typedef {Error<"addClockEntry">} AddClockEntryError
+ * @property {string} type - Error type identifier ("addClockEntry")
+ * @property {string} message - Human-readable error message
+ * @property {Error} [innerError] - Optional underlying system error for debugging
+ * @typedef {DateInvalidError} AddClockEntryError - Error when a date is invalid
+ * @typedef {DateInvalidFormatError} AddClockEntryError - Error when a date has invalid format
+ * @typedef {ParseError} AddClockEntryError - Error when parsing record data fails
  */
 export type AddClockEntryError =
+  | (Error<"addClockEntry"> & {
+      innerError?: globalThis.Error;
+    })
   | DateInvalidError
-  | CreateRecordError
   | DateInvalidFormatError
   | ParseError;
 
@@ -336,9 +363,10 @@ export function addClockEntry(
             error,
           );
           return {
-            type: "createRecord",
+            type: "addClockEntry",
             message: `Failed to add ${clockIn ? "clock-in" : "clock-out"} entry.`,
-          } as CreateRecordError;
+            innerError: error instanceof Error ? error : undefined,
+          } as AddClockEntryError;
         },
       });
     }),
@@ -347,13 +375,176 @@ export function addClockEntry(
 }
 
 /**
- * Type definition for Legacy Import-related errors
+ * Type definition for modify timestamp error
+ *
+ * @typedef {Error<"modifyTimestamp">} ModifyTimestampError
+ * @property {string} type - Error type identifier ("modifyTimestamp")
+ * @property {string} message - Human-readable error message about the timestamp modification failure
+ * @property {Error} [innerError] - Optional underlying system error for debugging
+ * @typedef {DateInvalidError} ModifyTimestampError - Error when the provided date is invalid
+ * @typedef {DateInvalidFormatError} ModifyTimestampError - Error when the date format is invalid
  */
-export interface LegacyImportError {
-  type: "legacyImport";
-  message: string;
-  innerError?: unknown;
+export type ModifyTimestampError =
+  | (Error<"modifyTimestamp"> & {
+      innerError?: globalThis.Error;
+    })
+  | DateInvalidFormatError
+  | DateInvalidError;
+
+/**
+ * Modifies the timestamp of an existing work clock record
+ *
+ * This function updates the timestamp of a specific work clock record identified by its ID.
+ * It ensures data integrity by using the server-side validation to prevent creating invalid
+ * sequences of clock in/out records.
+ *
+ * @param workClockId - The unique identifier of the work clock record to modify
+ * @param newTimestamp - The new Date object to set as the timestamp
+ * @returns An Effect that yields true on success, or fails with ModifyTimestampError
+ * @example
+ * // Modify a work clock record timestamp
+ * const recordId = "record123";
+ * const newTime = new Date('2025-03-28T17:30:00');
+ * const result = await Effect.runPromise(modifyWorkClockTimestamp(recordId, newTime));
+ */
+export function modifyWorkClockTimestamp(
+  workClockId: string,
+  newTimestamp: Date,
+): Effect.Effect<boolean, ModifyTimestampError> {
+  return pipe(
+    dateToRFC3339(newTimestamp),
+    Effect.flatMap((timestampStr) => {
+      return Effect.tryPromise({
+        try: async () => {
+          // Create FormData with the required parameters
+          const formData = new FormData();
+          formData.append("work_clock_id", workClockId);
+          formData.append("new_timestamp", timestampStr);
+
+          // Call the API endpoint
+          const response = await fetch("/api/work_clock/modify", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(
+              `Server returned ${response.status}: ${response.statusText}`,
+            );
+          }
+
+          return true;
+        },
+        catch: (error) => {
+          console.error(
+            "Unexpected error occurred while modifying work clock timestamp:",
+            error,
+          );
+          return {
+            type: "modifyTimestamp",
+            message: `Failed to modify timestamp for work clock record: "${workClockId}".`,
+            innerError: error instanceof Error ? error : undefined,
+          } as ModifyTimestampError;
+        },
+      });
+    }),
+  );
 }
+
+/**
+ * Type definition for adding clock in/out pair error
+ *
+ * @typedef {Error<"addClockInOutPair">} AddClockInOutPairError
+ * @property {string} type - Error type identifier ("addClockInOutPair")
+ * @property {string} message - Human-readable error message about the clock in/out pair addition failure
+ * @property {Error} [innerError] - Optional underlying system error for debugging
+ * @typedef {DateInvalidFormatError} AddClockInOutPairError - Error when one of the dates has invalid format
+ * @typedef {DateInvalidError} AddClockInOutPairError - Error when one of the dates is invalid
+ */
+export type AddClockInOutPairError =
+  | (Error<"addClockInOutPair"> & {
+      innerError?: globalThis.Error;
+    })
+  | DateInvalidFormatError
+  | DateInvalidError;
+
+/**
+ * Adds a complete clock in/out pair with specified timestamps
+ *
+ * This function creates a pair of records: one for clock in and one for clock out,
+ * with the specified timestamps. This is useful for entering historical work periods
+ * or for manual corrections.
+ *
+ * @param clockInTimestamp - The Date object for the clock in record
+ * @param clockOutTimestamp - The Date object for the clock out record
+ * @returns An Effect that yields true on success, or fails with AddClockInOutPairError
+ * @example
+ * // Add a complete clock in/out pair
+ * const clockIn = new Date('2025-03-28T09:00:00');
+ * const clockOut = new Date('2025-03-28T17:00:00');
+ * const result = await Effect.runPromise(addClockInOutPair(clockIn, clockOut));
+ */
+export function addClockInOutPair(
+  clockInTimestamp: Date,
+  clockOutTimestamp: Date,
+): Effect.Effect<boolean, AddClockInOutPairError> {
+  return pipe(
+    Effect.all([
+      dateToRFC3339(clockInTimestamp),
+      dateToRFC3339(clockOutTimestamp),
+    ]),
+    Effect.flatMap(([clockInStr, clockOutStr]) => {
+      return Effect.tryPromise({
+        try: async () => {
+          // Create FormData with the required parameters
+          const formData = new FormData();
+          formData.append("clock_in_timestamp", clockInStr);
+          formData.append("clock_out_timestamp", clockOutStr);
+
+          // Call the API endpoint
+          const response = await fetch(
+            "/api/work_clock/add_clock_in_out_pair",
+            {
+              method: "POST",
+              body: formData,
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              `Server returned ${response.status}: ${response.statusText}`,
+            );
+          }
+
+          return true;
+        },
+        catch: (error) => {
+          console.error(
+            "Unexpected error occurred while adding clock in/out pair:",
+            error,
+          );
+          return {
+            type: "addClockInOutPair",
+            message: "Failed to add clock in/out pair.",
+            innerError: error instanceof Error ? error : undefined,
+          } as AddClockInOutPairError;
+        },
+      });
+    }),
+  );
+}
+
+/**
+ * Type definition for Legacy Import-related errors
+ *
+ * @typedef {Error<"legacyImport">} LegacyImportError
+ * @property {string} type - Error type identifier ("legacyImport")
+ * @property {string} message - Human-readable error message about the import failure
+ * @property {Error} [innerError] - Optional underlying system error for debugging
+ */
+export type LegacyImportError = Error<"legacyImport"> & {
+  innerError?: globalThis.Error;
+};
 
 /**
  * Type definition for Legacy Import response
@@ -436,7 +627,7 @@ export function uploadLegacyDatabase(
           error instanceof Error ?
             error.message
           : "Failed to upload legacy database file",
-        innerError: error,
+        innerError: error instanceof Error ? error : undefined,
       };
     },
   });
@@ -465,14 +656,18 @@ type TimeEntriesStream = {
 /**
  * Error type for when an attempt is made to subscribe to a stream that was already subscribed
  *
- * @extends {Error<"entriesStreamWasSubscribed">}
+ * @typedef {Error<"entriesStreamWasSubscribed">} EntriesStreamWasSubscribedError
+ * @property {string} type - Error type identifier ("entriesStreamWasSubscribed")
+ * @property {string} message - Human-readable error message explaining the subscription conflict
  */
 type EntriesStreamWasSubscribedError = Error<"entriesStreamWasSubscribed">;
 
 /**
  * Error type for invalid date filter parameters used in stream creation
  *
- * @extends {Error<"filterNotValid">}
+ * @typedef {Error<"filterNotValid">} FilterNotValidError
+ * @property {string} type - Error type identifier ("filterNotValid")
+ * @property {string} message - Human-readable error message explaining the filter validation failure
  */
 type FilterNotValidError = Error<"filterNotValid">;
 
