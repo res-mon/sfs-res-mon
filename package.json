@@ -58,7 +58,7 @@
     "@types/prismjs": "^1.26.5",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",
-    "@xstate/store": "^3.4.2",
+    "@xstate/store": "^3.4.3",
     "ag-grid-community": "^33.2.1",
     "daisyui": "^5.0.16",
     "date-fns": "^4.1.0",
