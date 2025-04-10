@@ -96,13 +96,10 @@ export function cleanupMiddleRecord(record: DailyRecord) {
  * and pairs them together to create TimeEntryPair objects. It handles various
  * edge cases like missing clock-ins or clock-outs and active sessions.
  *
- * @param records - Array of TimeStampEntry objects from PocketBase
+ * @param records - Array of TimeStampEntry objects from PocketBase sorted by oldest first
  * @returns Array of paired clock-in/clock-out entries
  */
 function createPairs(records: TimeStampEntry[]): TimeEntryPair[] {
-  // Sort by date (oldest first)
-  records.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
   const pairs: TimeEntryPair[] = [];
   let currentPair: TimeEntryPair | null = null;
 
@@ -204,7 +201,7 @@ export function cleanupDailyRecords(records: DailyRecord[]): DailyRecord[] {
  * Process TimeStampEntry arrays into DailyRecord objects for UI display
  * This groups entries by date and pairs clock-in/clock-out entries
  *
- * @param entries - Array of TimeStampEntry objects from PocketBase
+ * @param entries - Array of TimeStampEntry objects from PocketBase sorted by oldest first
  * @returns Array of DailyRecord objects for UI rendering
  */
 export function processTimeEntries(entries: TimeStampEntry[]): DailyRecord[] {
