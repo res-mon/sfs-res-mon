@@ -22,6 +22,7 @@ import {
 
 import ActivityHeatmap from "../components/ActivityHeatmap";
 import CircularTimeDisplay from "../components/CircularTimeDisplay";
+import ClockInOutPairForm from "../components/ClockInOutPairForm";
 import ClockStatusCard from "../components/ClockStatusCard";
 import ComparisonView from "../components/ComparisonView";
 import EnergyChart from "../components/EnergyChart";
@@ -80,7 +81,8 @@ const WorkClock: Component = (): JSX.Element => {
     | "weekpattern"
     | "journey"
     | "energy"
-    | "calendar";
+    | "calendar"
+    | "pairform";
   const [activeVisual, setActiveVisual] = createSignal<VisualType>("heatmap");
   const [selectedDate, setSelectedDate] = createSignal<string | undefined>(
     undefined,
@@ -218,6 +220,11 @@ const WorkClock: Component = (): JSX.Element => {
       id: "table",
       label: "Tabelle",
       icon: <TableIcon class="mr-1 hidden sm:inline" />,
+    },
+    {
+      id: "pairform",
+      label: "Zeitpaar hinzufügen",
+      icon: <ClockIcon class="mr-1 hidden sm:inline" />,
     },
   ];
 
@@ -382,6 +389,12 @@ const WorkClock: Component = (): JSX.Element => {
           <Show when={activeVisual() === "table"}>
             <div class="intersect:motion-preset-fade-in intersect-once">
               <TimeEntryTable dailyRecords={dailyRecords()} />
+            </div>
+          </Show>
+
+          <Show when={activeVisual() === "pairform"}>
+            <div class="intersect:motion-preset-fade-in intersect-once">
+              <ClockInOutPairForm />
             </div>
           </Show>
         </Show>
