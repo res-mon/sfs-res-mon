@@ -28,6 +28,39 @@ export type Error<T extends string> = {
 };
 
 /**
+ * Generic error type for common error cases
+ * Provides a standardized way to represent general errors throughout the application
+ *
+ * @extends {Error<"generic">}
+ * @property {unknown} [innerError] - Optional inner error for additional context
+ */
+export type GenericError = Error<"generic"> & {
+  innerError?: unknown; // Optional inner error for additional context.
+};
+
+/**
+ * Creates a new GenericError with the provided message and optional inner error
+ * Useful for wrapping unknown errors or creating standardized error objects
+ *
+ * @param {string} message - Human readable error message
+ * @param {unknown} [innerError] - Optional inner error for additional context
+ * @returns {GenericError} A new generic error object
+ * @example
+ * // Returns { type: "generic", message: "Failed to connect to database", innerError: originalError }
+ * newGenericError("Failed to connect to database", originalError)
+ */
+export function newGenericError(
+  message: string,
+  innerError?: unknown,
+): GenericError {
+  return {
+    type: "generic",
+    message,
+    innerError,
+  };
+}
+
+/**
  * Wraps an existing error with additional context by prepending and/or appending text to the error message
  * This function maintains the original error type while enriching the message with more context
  *
@@ -54,6 +87,61 @@ export function wrapError<
     ...error,
     message,
   };
+}
+
+/**
+ * Type guard to check if an unknown value is an Error type
+ * Used for safe error handling and type narrowing in try/catch blocks
+ *
+ * @param {unknown} error - The value to check
+ * @returns {boolean} True if the value conforms to the Error type structure
+ * @example
+ * try {
+ *   // some operation that might throw
+ * } catch (err) {
+ *   if (isError(err)) {
+ *     // err is now typed as Error<string>
+ *     console.log(err.type, err.message);
+ *   }
+ * }
+ */
+export function isError(error: unknown): error is Error<string> {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "type" in error &&
+    "message" in error &&
+    typeof error.type === "string" &&
+    typeof error.message === "string"
+  );
+}
+
+/**
+ * Converts any error type to a human-readable string representation
+ * Provides consistent error formatting for logging or displaying errors to users
+ *
+ * @param {unknown} error - The error to stringify, which can be of any type
+ * @returns {string | undefined} A formatted error string, or undefined if the error cannot be stringified
+ * @example
+ * // For an Error<"network"> returns "[network-error] Failed to connect to server"
+ * // For a standard Error returns "Error: File not found"
+ * // For a string error returns "Error: Something went wrong"
+ * stringifyError(someError)
+ */
+export function stringifyError(error: unknown): string | undefined {
+  if (isError(error)) {
+    return `[${error.type}-error] ${error.message}`;
+  }
+
+  if (error instanceof Error) {
+    return `Error: ${error.message}`;
+  }
+
+  if (typeof error === "string") {
+    return `Error: ${error}`;
+  }
+
+  return undefined;
 }
 
 /**
