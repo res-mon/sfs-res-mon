@@ -76,14 +76,9 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 RUN mkdir -p /app/pb_data /app/pb_public /app/pb_hooks /app/pb_migrations && \
   chown -R appuser:appgroup /app
 
-# Create an entrypoint script to fix permissions at runtime
-RUN echo '#!/bin/sh\n\
-  # Fix ownership of mounted volumes (running as root)\n\
-  chown -R appuser:appgroup /app/pb_data /app/pb_public /app/pb_hooks /app/pb_migrations\n\
-  \n\
-  # Run the application as appuser\n\
-  exec su-exec appuser:appgroup "$@"' > /app/docker-entrypoint.sh && \
-  chmod +x /app/docker-entrypoint.sh
+# Copy the entrypoint script
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
 
 
 # Copy only the compiled binary from the backend build stage
