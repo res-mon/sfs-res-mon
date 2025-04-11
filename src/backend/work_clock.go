@@ -79,6 +79,21 @@ func parseTimeParam(paramValue string, paramName string) (time.Time, error) {
 
 	timeValue, err := time.Parse(time.RFC3339, paramValue)
 	if err != nil {
+		var secondErr error
+		for _, layout := range []string{time.RFC3339Nano, "2006-01-02 15:04:05.999Z", "2006-01-02 15:04:05Z"} {
+			timeValue, secondErr = time.Parse(layout, paramValue)
+			if secondErr == nil {
+				err = nil
+				break
+			}
+		}
+
+	}
+	if err != nil {
+
+	}
+
+	if err != nil {
 		return time.Time{}, fmt.Errorf("invalid '%s' format. Expected RFC3339", paramName)
 	}
 
