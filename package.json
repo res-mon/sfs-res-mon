@@ -62,7 +62,7 @@
     "ag-grid-community": "^33.2.1",
     "daisyui": "^5.0.16",
     "date-fns": "^4.1.0",
-    "effect": "^3.14.6",
+    "effect": "^3.14.8",
     "eslint": "^9.24.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-import": "^2.31.0",
