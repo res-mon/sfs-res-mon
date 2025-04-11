@@ -93,9 +93,9 @@ const ActivityHeatmap: Component<ActivityHeatmapProps> = (props) => {
     // Determine intensity level (0-4) based on hours
     if (hoursWorked <= 0) return 0;
     if (hoursWorked < 2) return 1;
-    if (hoursWorked < 5) return 2;
-    if (hoursWorked < 8) return 3;
-    return 4; // 8+ hours
+    if (hoursWorked < 4) return 2;
+    if (hoursWorked < 6) return 3;
+    return 4; // 6+ hours
   };
 
   // Format the tooltip for a day
