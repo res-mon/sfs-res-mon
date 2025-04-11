@@ -127,13 +127,13 @@ const ActivityHeatmap: Component<ActivityHeatmapProps> = (props) => {
     const level = getColorIntensity(date);
 
     const baseClass =
-      "w-4 h-4 rounded-sm m-0.5 cursor-pointer transition-colors";
+      "from-base-100 to-success border-base-300 w-4 h-4 rounded-sm border m-0.5 cursor-pointer bg-linear-to-r bg-size-[103rem]";
 
-    if (level === 0) return `${baseClass} bg-base-300`;
-    if (level === 1) return `${baseClass} bg-success bg-opacity-25`;
-    if (level === 2) return `${baseClass} bg-success bg-opacity-50`;
-    if (level === 3) return `${baseClass} bg-success bg-opacity-75`;
-    return `${baseClass} bg-success`;
+    if (level === 0) return `${baseClass} bg-position-[-0rem]`;
+    if (level === 1) return `${baseClass} bg-position-[-25rem]`;
+    if (level === 2) return `${baseClass} bg-position-[-50rem]`;
+    if (level === 3) return `${baseClass} bg-position-[-75rem]`;
+    return `${baseClass} bg-position-[-100rem]`;
   };
 
   return (
@@ -146,11 +146,11 @@ const ActivityHeatmap: Component<ActivityHeatmapProps> = (props) => {
         <div class="mt-2 flex items-center text-sm">
           <span class="mr-2">Aktivität:</span>
           <div class="flex items-center gap-1">
-            <div class="bg-base-300 h-3 w-3 rounded-sm" />
-            <div class="bg-success bg-opacity-25 h-3 w-3 rounded-sm" />
-            <div class="bg-success bg-opacity-50 h-3 w-3 rounded-sm" />
-            <div class="bg-success bg-opacity-75 h-3 w-3 rounded-sm" />
-            <div class="bg-success h-3 w-3 rounded-sm" />
+            <div class="from-base-100 to-success border-base-300 h-3 w-3 rounded-sm border bg-linear-to-r bg-size-[103rem] bg-position-[-0rem]" />
+            <div class="from-base-100 to-success border-base-300 h-3 w-3 rounded-sm border bg-linear-to-r bg-size-[103rem] bg-position-[-25rem]" />
+            <div class="from-base-100 to-success border-base-300 h-3 w-3 rounded-sm border bg-linear-to-r bg-size-[103rem] bg-position-[-50rem]" />
+            <div class="from-base-100 to-success border-base-300 h-3 w-3 rounded-sm border bg-linear-to-r bg-size-[103rem] bg-position-[-75rem]" />
+            <div class="from-base-100 to-success border-base-300 h-3 w-3 rounded-sm border bg-linear-to-r bg-size-[103rem] bg-position-[-100rem]" />
           </div>
           <span class="ml-1">mehr</span>
           <span
