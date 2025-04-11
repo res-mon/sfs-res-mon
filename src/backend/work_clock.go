@@ -297,7 +297,7 @@ func deleteClockInOutPair(app *pocketbase.PocketBase, clockInID string) error {
 		return fmt.Errorf("failed to find succeeding work clock record: %w", err)
 	}
 
-	if len(succeedingRecords) > 0 && !succeedingRecords[0].GetBool("clock_in") {
+	if len(succeedingRecords) > 0 && succeedingRecords[0].GetBool("clock_in") {
 		return fmt.Errorf("succeeding record with id '%s' is not a clock out record", succeedingRecords[0].Id)
 	}
 
