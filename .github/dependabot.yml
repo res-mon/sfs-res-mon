@@ -18,6 +18,9 @@ updates:
     commit-message:
       prefix: "deps(bun)"
       include: "scope"
+    groups:
+      bun-dependencies:
+        patterns: ["*"]
 
   - package-ecosystem: "gomod"
     directory: "/"
@@ -32,6 +35,9 @@ updates:
     commit-message:
       prefix: "deps(go)"
       include: "scope"
+    groups:
+      go-dependencies:
+        patterns: ["*"]
 
   - package-ecosystem: "docker"
     directory: "/"
@@ -46,6 +52,9 @@ updates:
     commit-message:
       prefix: "deps(docker)"
       include: "scope"
+    groups:
+      docker-dependencies:
+        patterns: ["*"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -60,3 +69,6 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
+    groups:
+      github-actions-dependencies:
+        patterns: ["*"]
