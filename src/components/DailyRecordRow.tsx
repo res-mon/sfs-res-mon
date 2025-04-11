@@ -9,6 +9,7 @@ import {
   TimeEntryPair,
   formatClockOutDate,
   formatDateForDisplay,
+  formatDurationForDisplay,
   formatTimeForDisplay,
 } from "./TimeEntryUtils";
 
@@ -137,7 +138,7 @@ const EntryPairRow: Component<EntryPairRowProps> = (props) => {
       <td>
         {props.pair.missingEntry ?
           "Unbekannt"
-        : formatTimeForDisplay(props.pair.duration)}
+        : formatDurationForDisplay(props.pair.duration)}
       </td>
     </tr>
   );

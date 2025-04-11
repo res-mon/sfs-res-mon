@@ -272,14 +272,18 @@ export function processTimeEntries(entries: TimeStampEntry[]): DailyRecord[] {
 }
 
 /**
- * Format time for display (DD Tage, HH:MM:SS or HH:MM:SS)
- * Converts milliseconds timestamp to a formatted time string
- * If the duration includes days, it will show "X Tage, HH:MM:SS"
- * Otherwise, it will just show "HH:MM:SS"
+ * Format duration for display (DD Tage, HH:MM:SS or HH:MM:SS)
+ * Converts milliseconds duration to a formatted time string
+ *
+ * @param durationMilliseconds - Duration in milliseconds to format
+ * @returns Formatted string. If the duration includes days, it will show "X Tage, HH:MM:SS"
+ *          Otherwise, it will just show "HH:MM:SS"
  */
-export const formatTimeForDisplay = (timestamp: number): string => {
+export const formatDurationForDisplay = (
+  durationMilliseconds: number,
+): string => {
   // Calculate time components from milliseconds
-  const totalSeconds = Math.floor(timestamp / 1000);
+  const totalSeconds = Math.floor(durationMilliseconds / 1000);
   const days = Math.floor(totalSeconds / 86400); // 86400 = seconds in a day
   const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -294,6 +298,18 @@ export const formatTimeForDisplay = (timestamp: number): string => {
   }
 
   return timeString;
+};
+
+/**
+ * Format timestamp for display as time
+ * Converts a milliseconds timestamp to a formatted time string (24-hour format)
+ *
+ * @param timestamp - Timestamp in milliseconds to format
+ * @returns Formatted time string in HH:mm:ss format
+ */
+export const formatTimeForDisplay = (timestamp: number): string => {
+  const date = new Date(timestamp);
+  return format(date, "HH:mm:ss");
 };
 
 /**
