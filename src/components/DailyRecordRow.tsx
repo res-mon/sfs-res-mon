@@ -1,9 +1,14 @@
 import CalendarPlusIcon from "~icons/tabler/calendar-plus";
 import ClockIcon from "~icons/tabler/clock";
 import ClockPlayIcon from "~icons/tabler/player-play";
+import DeleteIcon from "~icons/tabler/trash";
 
-import { Component, For, Show } from "solid-js";
+import { Component, For, Show, createSignal } from "solid-js";
 
+import { Effect } from "effect";
+
+import { stringifyError } from "../services/pocketBase/pocketBase";
+import { deleteTimeEntry } from "../services/workClock";
 import {
   DailyRecord,
   TimeEntryPair,
@@ -110,37 +115,126 @@ interface EntryPairRowProps {
  * Displays a single clock in/out pair within a day record
  */
 const EntryPairRow: Component<EntryPairRowProps> = (props) => {
+  const [isDeleting, setIsDeleting] = createSignal(false);
+  const [deleteError, setDeleteError] = createSignal("");
+  const [showConfirmModal, setShowConfirmModal] = createSignal(false);
+
+  // Show delete confirmation dialog
+  const openDeleteConfirmation = (e: MouseEvent) => {
+    e.stopPropagation(); // Stop event propagation to prevent row toggle
+
+    if (props.pair.clockInId == null) {
+      setDeleteError("Kann nicht gelöscht werden: Kein gültiger Eintrag.");
+      return;
+    }
+
+    setShowConfirmModal(true);
+  };
+
+  // Perform the actual deletion
+  const confirmDelete = () => {
+    if (props.pair.clockInId == null) return;
+
+    setIsDeleting(true);
+    setDeleteError("");
+    setShowConfirmModal(false);
+
+    Effect.runPromise(deleteTimeEntry(props.pair.clockInId)).then(
+      (success) => {
+        setIsDeleting(false);
+        if (!success) {
+          setDeleteError("Fehler beim Löschen des Eintrags.");
+        }
+      },
+      (error) => {
+        setIsDeleting(false);
+        setDeleteError(
+          stringifyError(error) ?? "Fehler beim Löschen des Eintrags.",
+        );
+      },
+    );
+  };
+
   return (
-    <tr class={props.pair.dayBoundary ? "bg-accent bg-opacity-10" : ""}>
-      <td>
-        {props.pair.clockIn != null ?
-          formatTimeForDisplay(props.pair.clockIn)
-        : "Fehlend"}
-      </td>
-      <td>
-        {props.pair.clockOut != null ?
-          formatClockOutDate(
-            props.pair.clockOut,
-            props.pair.clockIn ?? props.pair.clockOut,
-          )
-        : props.pair.missingEntry ?
-          "Fehlend"
-        : "Noch eingestempelt"}
-        {props.pair.dayBoundary && (
-          <span
-            class="tooltip tooltip-right ml-2"
-            data-tip="Dieser Eintrag überschreitet Mitternacht"
-          >
-            <CalendarPlusIcon class="text-accent inline-block" />
+    <>
+      <tr class={props.pair.dayBoundary ? "bg-accent bg-opacity-10" : ""}>
+        <td>
+          {props.pair.clockIn != null ?
+            formatTimeForDisplay(props.pair.clockIn)
+          : "Fehlend"}
+        </td>
+        <td>
+          {props.pair.clockOut != null ?
+            formatClockOutDate(
+              props.pair.clockOut,
+              props.pair.clockIn ?? props.pair.clockOut,
+            )
+          : props.pair.missingEntry ?
+            "Fehlend"
+          : "Noch eingestempelt"}
+          {props.pair.dayBoundary && (
+            <span
+              class="tooltip tooltip-right ml-2"
+              data-tip="Dieser Eintrag überschreitet Mitternacht"
+            >
+              <CalendarPlusIcon class="text-accent inline-block" />
+            </span>
+          )}
+        </td>
+        <td class="flex items-center justify-between">
+          <span>
+            {props.pair.missingEntry ?
+              "Unbekannt"
+            : formatDurationForDisplay(props.pair.duration)}
           </span>
-        )}
-      </td>
-      <td>
-        {props.pair.missingEntry ?
-          "Unbekannt"
-        : formatDurationForDisplay(props.pair.duration)}
-      </td>
-    </tr>
+          <Show when={props.pair.clockInId}>
+            <button
+              class="btn btn-error btn-xs ml-2"
+              onClick={openDeleteConfirmation}
+              disabled={isDeleting()}
+              title="Eintrag löschen"
+            >
+              <DeleteIcon class={isDeleting() ? "animate-pulse" : ""} />
+            </button>
+          </Show>
+          <Show when={deleteError()}>
+            <div class="text-error text-xs">{deleteError()}</div>
+          </Show>
+        </td>
+      </tr>
+
+      {/* Delete Confirmation Modal */}
+      <Show when={showConfirmModal()}>
+        <div class="modal modal-open">
+          <div class="modal-box">
+            <h3 class="text-lg font-bold">Zeiteintrag löschen</h3>
+            <p class="py-4">Möchten Sie diesen Zeiteintrag wirklich löschen?</p>
+            <div class="modal-action">
+              <button
+                class="btn btn-outline"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Abbrechen
+              </button>
+              <button
+                class="btn btn-error"
+                onClick={confirmDelete}
+                disabled={isDeleting()}
+              >
+                {isDeleting() ?
+                  <span class="loading loading-spinner loading-xs mr-2" />
+                : <DeleteIcon class="mr-2" />}
+                Löschen
+              </button>
+            </div>
+          </div>
+          <div
+            class="modal-backdrop"
+            onClick={() => setShowConfirmModal(false)}
+          />
+        </div>
+      </Show>
+    </>
   );
 };
 
