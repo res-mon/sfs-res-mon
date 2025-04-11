@@ -60,7 +60,7 @@
     "@typescript-eslint/parser": "^8.29.1",
     "@xstate/store": "^3.4.2",
     "ag-grid-community": "^33.2.1",
-    "daisyui": "^5.0.16",
+    "daisyui": "^5.0.18",
     "date-fns": "^4.1.0",
     "effect": "^3.14.6",
     "eslint": "^9.24.0",
