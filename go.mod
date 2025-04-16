@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/pocketbase/dbx v1.11.0
-	github.com/pocketbase/pocketbase v0.26.6
+	github.com/pocketbase/pocketbase v0.27.0
 	modernc.org/sqlite v1.37.0
 )
 
@@ -28,7 +28,7 @@ require (
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
-	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
+	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
 	golang.org/x/image v0.26.0 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.29.0 // indirect
