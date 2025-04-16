@@ -26,7 +26,6 @@ const InitialAdminEmail = "__initial_superuser@example.com"
 
 func init() {
 	m.Register(func(app core.App) error {
-
 		collection, err := app.FindCollectionByNameOrId(core.CollectionNameSuperusers)
 		if err != nil {
 			return err
