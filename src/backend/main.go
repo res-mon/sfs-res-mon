@@ -35,6 +35,7 @@ func Main(isGoRun bool, dist fs.FS) {
 		return se.Next()
 	})
 
+	RegisterUserAPI(app)
 	RegisterLegacyImportAPI(app)
 	RegisterWorkClockAPI(app)
 
