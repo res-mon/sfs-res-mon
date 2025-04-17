@@ -22,7 +22,7 @@ import {
   validateWorkClock,
   workClock,
 } from "./pocketBase/collections";
-import {
+import pb, {
   DateInvalidError,
   DateInvalidFormatError,
   type Error,
@@ -126,6 +126,7 @@ export function deleteTimeEntry(
       const response = await fetch("/api/work_clock/delete", {
         method: "POST",
         body: formData,
+        headers: { Authorization: `Bearer ${pb.authStore.token}` },
       });
 
       if (!response.ok) {
@@ -319,10 +320,12 @@ export function addClockEntry(
             if (clockIn) {
               response = await fetch("/api/work_clock/clock_in", {
                 method: "GET",
+                headers: { Authorization: `Bearer ${pb.authStore.token}` },
               });
             } else {
               response = await fetch("/api/work_clock/clock_out", {
                 method: "GET",
+                headers: { Authorization: `Bearer ${pb.authStore.token}` },
               });
             }
           } else {
@@ -334,6 +337,7 @@ export function addClockEntry(
             response = await fetch("/api/work_clock/clock_in_out_at", {
               method: "POST",
               body: formData,
+              headers: { Authorization: `Bearer ${pb.authStore.token}` },
             });
           }
 
@@ -421,10 +425,10 @@ export function modifyWorkClockTimestamp(
           formData.append("work_clock_id", workClockId);
           formData.append("new_timestamp", timestampStr);
 
-          // Call the API endpoint
           const response = await fetch("/api/work_clock/modify", {
             method: "POST",
             body: formData,
+            headers: { Authorization: `Bearer ${pb.authStore.token}` },
           });
 
           if (!response.ok) {
@@ -501,12 +505,12 @@ export function addClockInOutPair(
           formData.append("clock_in_timestamp", clockInStr);
           formData.append("clock_out_timestamp", clockOutStr);
 
-          // Call the API endpoint
           const response = await fetch(
             "/api/work_clock/add_clock_in_out_pair",
             {
               method: "POST",
               body: formData,
+              headers: { Authorization: `Bearer ${pb.authStore.token}` },
             },
           );
 

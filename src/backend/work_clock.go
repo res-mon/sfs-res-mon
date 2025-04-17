@@ -114,6 +114,9 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 		//   400 Bad Request - Missing or invalid 'clock_in' parameter.
 		//   500 Internal Server Error - On processing failures.
 		se.Router.POST("/api/work_clock", func(e *core.RequestEvent) error {
+			if e.Auth == nil {
+				return e.Error(http.StatusUnauthorized, "Unauthorized", nil)
+			}
 			clockInBool, err := parseBoolParam(e.Request.FormValue("clock_in"), "clock_in")
 			if err != nil {
 				return e.Error(http.StatusBadRequest, err.Error(), nil)
@@ -131,6 +134,9 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 		//   200 OK    - {"success":true}
 		//   500 Internal Server Error - On operation failure.
 		se.Router.GET("/api/work_clock/clock_in", func(e *core.RequestEvent) error {
+			if e.Auth == nil {
+				return e.Error(http.StatusUnauthorized, "Unauthorized", nil)
+			}
 			if err := clockInOut(app, true); err != nil {
 				return e.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to clock in: %v", err), err)
 			}
@@ -143,6 +149,9 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 		//   200 OK    - {"success":true}
 		//   500 Internal Server Error - On operation failure.
 		se.Router.GET("/api/work_clock/clock_out", func(e *core.RequestEvent) error {
+			if e.Auth == nil {
+				return e.Error(http.StatusUnauthorized, "Unauthorized", nil)
+			}
 			if err := clockInOut(app, false); err != nil {
 				return e.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to clock out: %v", err), err)
 			}
@@ -155,6 +164,9 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 		//   200 OK    - {"success":true}
 		//   500 Internal Server Error - On operation failure.
 		se.Router.GET("/api/work_clock/toggle", func(e *core.RequestEvent) error {
+			if e.Auth == nil {
+				return e.Error(http.StatusUnauthorized, "Unauthorized", nil)
+			}
 			clockedIn, err := isCurrentlyClockedIn(app)
 			if err != nil {
 				return e.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to check current clock status: %v", err), err)
@@ -175,6 +187,9 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 		//   400 Bad Request - Missing 'clock_in_id' parameter.
 		//   500 Internal Server Error - On deletion failure.
 		se.Router.POST("/api/work_clock/delete", func(e *core.RequestEvent) error {
+			if e.Auth == nil {
+				return e.Error(http.StatusUnauthorized, "Unauthorized", nil)
+			}
 			clockInID := e.Request.FormValue("clock_in_id")
 			if clockInID == "" {
 				return e.Error(http.StatusBadRequest, "Missing 'clock_in_id' (string) parameter", nil)
@@ -197,6 +212,9 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 		//   400 Bad Request - Missing/invalid parameters.
 		//   500 Internal Server Error - On modification failure.
 		se.Router.POST("/api/work_clock/modify", func(e *core.RequestEvent) error {
+			if e.Auth == nil {
+				return e.Error(http.StatusUnauthorized, "Unauthorized", nil)
+			}
 			workClockID := e.Request.FormValue("work_clock_id")
 			if workClockID == "" {
 				return e.Error(http.StatusBadRequest, "Missing 'work_clock_id' (string) parameter", nil)
@@ -223,6 +241,9 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 		//   400 Bad Request - Missing/invalid parameters.
 		//   500 Internal Server Error - On operation failure.
 		se.Router.POST("/api/work_clock/clock_in_out_at", func(e *core.RequestEvent) error {
+			if e.Auth == nil {
+				return e.Error(http.StatusUnauthorized, "Unauthorized", nil)
+			}
 			clockInBool, err := parseBoolParam(e.Request.FormValue("clock_in"), "clock_in")
 			if err != nil {
 				return e.Error(http.StatusBadRequest, err.Error(), nil)
@@ -249,6 +270,9 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 		//   400 Bad Request - Missing/invalid parameters.
 		//   500 Internal Server Error - On operation failure.
 		se.Router.POST("/api/work_clock/add_clock_in_out_pair", func(e *core.RequestEvent) error {
+			if e.Auth == nil {
+				return e.Error(http.StatusUnauthorized, "Unauthorized", nil)
+			}
 			clockInTimestamp, err := parseTimeParam(e.Request.FormValue("clock_in_timestamp"), "clock_in_timestamp")
 			if err != nil {
 				return e.Error(http.StatusBadRequest, err.Error(), nil)

@@ -43,6 +43,9 @@ type ActivityLog struct {
 func RegisterLegacyImportAPI(app *pocketbase.PocketBase) {
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		se.Router.POST("/api/legacy_import", func(e *core.RequestEvent) error {
+			if e.Auth == nil {
+				return e.Error(http.StatusUnauthorized, "Unauthorized", nil)
+			}
 			return handleLegacyImportPost(app, e)
 		})
 		return se.Next()
