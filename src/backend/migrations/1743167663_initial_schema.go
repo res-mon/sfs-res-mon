@@ -40,11 +40,11 @@ func init() {
 		// Security rules
 		// Empty strings mean no rules are applied (unrestricted)
 		// Nil means only superusers can perform the action
-		c.CreateRule = nil // Who can create records
-		c.DeleteRule = nil // Who can delete records
-		c.ListRule = nil   // Who can list/query records
-		c.UpdateRule = nil // Who can update records
-		c.ViewRule = nil   // Who can view individual records
+		c.CreateRule = nil                           // Who can create records
+		c.DeleteRule = nil                           // Who can delete records
+		c.ListRule = ref("@request.auth.id != \"\"") // Who can list/query records
+		c.UpdateRule = nil                           // Who can update records
+		c.ViewRule = ref("@request.auth.id != \"\"") // Who can view individual records
 
 		// Field definitions for the work_clock collection
 		c.Fields = []core.Field{
