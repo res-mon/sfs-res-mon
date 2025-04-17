@@ -8,6 +8,7 @@
 import PocketBase, { ClientResponseError } from "pocketbase";
 
 import { Effect, pipe } from "effect";
+import { FiberFailureCauseId, isFiberFailure } from "effect/Runtime";
 
 // Create a single PocketBase instance to be used throughout the app
 // This ensures we have only one connection to the backend
@@ -117,8 +118,30 @@ export function isError(error: unknown): error is Error<string> {
 }
 
 /**
- * Converts any error type to a human-readable string representation
+ * Type guard to detect nested failure structures produced by Effect/Fiber failures.
+ * Checks if an object has a 'cause' property containing a 'failure' field.
+ * Useful when converting Fiber failures to JSON and extracting the underlying error.
+ *
+ * @param {unknown} error - The potential failure object to inspect.
+ * @returns {boolean} True if error has nested cause.failure field.
+ */
+function hasCauseAndFailure(
+  error: unknown,
+): error is object & Record<"cause", object & Record<"failure", unknown>> {
+  return (
+    error != null &&
+    typeof error === "object" &&
+    "cause" in error &&
+    error.cause != null &&
+    typeof error.cause === "object" &&
+    "failure" in error.cause
+  );
+}
+
+/**
+ * Converts any error type (including Fiber failures) to a human-readable string representation
  * Provides consistent error formatting for logging or displaying errors to users
+ * Supports custom Error<T>, standard Error instances, string errors, and nested Fiber failure causes
  *
  * @param {unknown} error - The error to stringify, which can be of any type
  * @returns {string | undefined} A formatted error string, or undefined if the error cannot be stringified
@@ -129,6 +152,25 @@ export function isError(error: unknown): error is Error<string> {
  * stringifyError(someError)
  */
 export function stringifyError(error: unknown): string | undefined {
+  if (isFiberFailure(error)) {
+    if ("error" in error[FiberFailureCauseId]) {
+      const message = stringifyError(error[FiberFailureCauseId].error);
+      if (message != null) {
+        return message;
+      }
+    }
+
+    const asJson = error.toJSON();
+    if (hasCauseAndFailure(asJson)) {
+      const message = stringifyError(asJson.cause.failure);
+      if (message != null) {
+        return message;
+      }
+    }
+
+    return `Fiber failure [${error.name}]: ${error.message}`;
+  }
+
   if (isError(error)) {
     return `[${error.type}-error] ${error.message}`;
   }
