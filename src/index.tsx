@@ -11,7 +11,8 @@ import { render } from "solid-js/web";
 
 import { Navigate, Route, RouteSectionProps, Router } from "@solidjs/router";
 
-import Layout from "./pages/Layout";
+import Login from "./pages/Login";
+import ProtectedLayout from "./pages/ProtectedLayout";
 
 const root = document.body;
 
@@ -65,26 +66,32 @@ function flattenPageTree(
 
 export const pageList = flattenPageTree(pageTree);
 
-render(() => {
-  return (
-    <Router root={Layout}>
+render(
+  () => (
+    <Router>
       <Route
-        path="/"
-        component={() => <Navigate href={"/work-clock"} />}
+        path="/login"
+        component={Login}
       />
-      <For
-        each={pageList}
-        children={(page) => (
-          <Route
-            path={page.path}
-            component={page.component}
-          />
-        )}
-      />
-      <Route
-        path="*404"
-        component={() => <span>404 LOL</span>}
-      />
+      <Route component={ProtectedLayout}>
+        <Route
+          path="/"
+          component={() => <Navigate href="/work-clock" />}
+        />
+        <For each={pageList}>
+          {(page) => (
+            <Route
+              path={page.path}
+              component={page.component}
+            />
+          )}
+        </For>
+        <Route
+          path="*404"
+          component={() => <span>404 LOL</span>}
+        />
+      </Route>
     </Router>
-  );
-}, root);
+  ),
+  root,
+);

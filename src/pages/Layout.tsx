@@ -22,10 +22,16 @@ import {
 
 import { createAutoAnimate } from "@formkit/auto-animate/solid";
 import { Collapsible } from "@kobalte/core";
-import { A, RouteSectionProps, useLocation } from "@solidjs/router";
+import {
+  A,
+  RouteSectionProps,
+  useLocation,
+  useNavigate,
+} from "@solidjs/router";
 import { Observer } from "tailwindcss-intersect";
 
 import { pageList } from "..";
+import { isAuthenticated } from "../services/userApi";
 
 const getBreadcrumbs = () => {
   const location = useLocation();
@@ -146,6 +152,20 @@ const NavigationLinks = (props: {
 };
 
 const Layout = (props: RouteSectionProps): JSX.Element => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Auth guard: redirect unauthenticated users to login, and prevent access to login when authenticated
+  createEffect(() => {
+    const path = location.pathname;
+    if (!isAuthenticated() && path !== "/login") {
+      navigate("/login", { replace: true });
+    }
+    if (isAuthenticated() && path === "/login") {
+      navigate("/work-clock", { replace: true });
+    }
+  });
+
   const [isDarkMode, setIsDarkMode] = createSignal(
     localStorage.getItem("theme") === "solidarity-dark" ||
       (localStorage.getItem("theme") !== "solidarity-light" &&
