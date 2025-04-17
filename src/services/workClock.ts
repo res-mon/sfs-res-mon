@@ -593,6 +593,7 @@ export function uploadLegacyDatabase(
       const response = await fetch("/api/legacy_import", {
         method: "POST",
         body: formData,
+        headers: { Authorization: `Bearer ${pb.authStore.token}` },
       });
 
       // Handle non-OK responses
