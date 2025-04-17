@@ -32,8 +32,14 @@ type ActivityLog struct {
 	Active    bool      `json:"active"`    // true = clock-in, false = clock-out
 }
 
-// RegisterLegacyImportAPI registers the legacy import endpoint with the PocketBase server.
-// It creates a POST route at '/api/legacy_import' that accepts database files for import.
+// RegisterLegacyImportAPI sets up the POST /api/legacy_import route
+// Purpose: Accepts an uploaded SQLite database (.db) file and imports its activity logs
+// into the PocketBase work_clock collection via the importActivityLogs function.
+// Responses:
+//
+//	200 OK    - {"success": true, "message": string} on successful import
+//	400 Bad Request - On missing/invalid file or multipart parsing errors
+//	500 Internal Server Error - On filesystem or database processing failures
 func RegisterLegacyImportAPI(app *pocketbase.PocketBase) {
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		se.Router.POST("/api/legacy_import", func(e *core.RequestEvent) error {
@@ -43,16 +49,17 @@ func RegisterLegacyImportAPI(app *pocketbase.PocketBase) {
 	})
 }
 
-// handleLegacyImportPost processes HTTP POST requests for the legacy import endpoint.
-// It handles file uploads, validates the file, processes the contained data,
-// and responds with the results of the import operation.
-//
+// Handler: POST /api/legacy_import
+// Purpose: Processes a multipart/form-data POST containing a 'database' SQLite file
+// and imports extracted activity logs to the work_clock collection.
 // Parameters:
-// - app: The PocketBase application instance
-// - req: The HTTP request containing the multipart form with the database file
-// - resp: The HTTP response writer to return results to the client
+//   - database (file) Required. SQLite .db file containing 'activity_log' and/or 'ActiveChanges' tables.
 //
-// Returns an error if any part of the import process fails.
+// Responses:
+//
+//	200 OK    - {"success":true, "message": string} on full import
+//	400 Bad Request - File too large, invalid extension, or missing upload field
+//	500 Internal Server Error - File I/O errors, DB read failures, or import errors
 func handleLegacyImportPost(app *pocketbase.PocketBase, e *core.RequestEvent) error {
 	// Max upload size of 50MB
 	const maxUploadSize = 50 * 1024 * 1024

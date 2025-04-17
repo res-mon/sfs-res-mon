@@ -74,30 +74,18 @@ func parseBoolParam(paramValue string, paramName string) (bool, error) {
 // - An error if the value is missing or not in RFC3339 format
 func parseTimeParam(paramValue string, paramName string) (time.Time, error) {
 	if paramValue == "" {
-		return time.Time{}, fmt.Errorf("missing '%s' (string) parameter", paramName)
+		return time.Time{}, fmt.Errorf("missing '%s' parameter: please provide an RFC3339 formatted timestamp", paramName)
 	}
 
-	timeValue, err := time.Parse(time.RFC3339, paramValue)
-	if err != nil {
-		var secondErr error
-		for _, layout := range []string{time.RFC3339Nano, "2006-01-02 15:04:05.999Z", "2006-01-02 15:04:05Z"} {
-			timeValue, secondErr = time.Parse(layout, paramValue)
-			if secondErr == nil {
-				err = nil
-				break
-			}
+	// Try standard RFC3339 and fallback formats
+	layouts := []string{time.RFC3339, time.RFC3339Nano, "2006-01-02 15:04:05.999Z", "2006-01-02 15:04:05Z"}
+	for _, layout := range layouts {
+		if t, err := time.Parse(layout, paramValue); err == nil {
+			return t, nil
 		}
-
-	}
-	if err != nil {
-
 	}
 
-	if err != nil {
-		return time.Time{}, fmt.Errorf("invalid '%s' format. Expected RFC3339", paramName)
-	}
-
-	return timeValue, nil
+	return time.Time{}, fmt.Errorf("invalid '%s' format: expected an RFC3339 compatible timestamp, got '%s'", paramName, paramValue)
 }
 
 // RegisterWorkClockAPI registers the work clock API endpoints with the PocketBase server.
@@ -117,6 +105,14 @@ func parseTimeParam(paramValue string, paramName string) (time.Time, error) {
 // - app: The PocketBase application instance
 func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		// Handler: POST /api/work_clock
+		// Purpose: Clocks in or out based on the 'clock_in' boolean form field.
+		// Parameters:
+		//   - clock_in (bool) Required. true = clock in, false = clock out.
+		// Responses:
+		//   200 OK    - {"success":true} on successful operation.
+		//   400 Bad Request - Missing or invalid 'clock_in' parameter.
+		//   500 Internal Server Error - On processing failures.
 		se.Router.POST("/api/work_clock", func(e *core.RequestEvent) error {
 			clockInBool, err := parseBoolParam(e.Request.FormValue("clock_in"), "clock_in")
 			if err != nil {
@@ -129,12 +125,23 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 			return callSucceeded(e)
 		})
 
+		// Handler: GET /api/work_clock/clock_in
+		// Purpose: Records a clock in event at the current timestamp.
+		// Responses:
+		//   200 OK    - {"success":true}
+		//   500 Internal Server Error - On operation failure.
 		se.Router.GET("/api/work_clock/clock_in", func(e *core.RequestEvent) error {
 			if err := clockInOut(app, true); err != nil {
 				return e.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to clock in: %v", err), err)
 			}
 			return callSucceeded(e)
 		})
+
+		// Handler: GET /api/work_clock/clock_out
+		// Purpose: Records a clock out event at the current timestamp.
+		// Responses:
+		//   200 OK    - {"success":true}
+		//   500 Internal Server Error - On operation failure.
 		se.Router.GET("/api/work_clock/clock_out", func(e *core.RequestEvent) error {
 			if err := clockInOut(app, false); err != nil {
 				return e.Error(http.StatusInternalServerError, fmt.Sprintf("Failed to clock out: %v", err), err)
@@ -142,6 +149,11 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 			return callSucceeded(e)
 		})
 
+		// Handler: GET /api/work_clock/toggle
+		// Purpose: Toggles between clock in and clock out states.
+		// Responses:
+		//   200 OK    - {"success":true}
+		//   500 Internal Server Error - On operation failure.
 		se.Router.GET("/api/work_clock/toggle", func(e *core.RequestEvent) error {
 			clockedIn, err := isCurrentlyClockedIn(app)
 			if err != nil {
@@ -154,6 +166,14 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 			return callSucceeded(e)
 		})
 
+		// Handler: POST /api/work_clock/delete
+		// Purpose: Deletes a clock-in/out pair given the 'clock_in_id' form field.
+		// Parameters:
+		//   - clock_in_id (string) Required. ID of the clock-in record to delete.
+		// Responses:
+		//   200 OK    - {"success":true}
+		//   400 Bad Request - Missing 'clock_in_id' parameter.
+		//   500 Internal Server Error - On deletion failure.
 		se.Router.POST("/api/work_clock/delete", func(e *core.RequestEvent) error {
 			clockInID := e.Request.FormValue("clock_in_id")
 			if clockInID == "" {
@@ -167,6 +187,15 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 			return callSucceeded(e)
 		})
 
+		// Handler: POST /api/work_clock/modify
+		// Purpose: Modifies the timestamp of an existing work clock record.
+		// Parameters:
+		//   - work_clock_id (string) Required: ID of the record to modify.
+		//   - new_timestamp (string) Required: RFC3339 formatted timestamp for the update.
+		// Responses:
+		//   200 OK    - {"success":true}
+		//   400 Bad Request - Missing/invalid parameters.
+		//   500 Internal Server Error - On modification failure.
 		se.Router.POST("/api/work_clock/modify", func(e *core.RequestEvent) error {
 			workClockID := e.Request.FormValue("work_clock_id")
 			if workClockID == "" {
@@ -184,6 +213,15 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 			return callSucceeded(e)
 		})
 
+		// Handler: POST /api/work_clock/clock_in_out_at
+		// Purpose: Records a clock in or out event at a specified timestamp.
+		// Parameters:
+		//   - clock_in (bool) Required: true for clock in, false for clock out.
+		//   - timestamp (string) Required: RFC3339 formatted timestamp for the event.
+		// Responses:
+		//   200 OK    - {"success":true}
+		//   400 Bad Request - Missing/invalid parameters.
+		//   500 Internal Server Error - On operation failure.
 		se.Router.POST("/api/work_clock/clock_in_out_at", func(e *core.RequestEvent) error {
 			clockInBool, err := parseBoolParam(e.Request.FormValue("clock_in"), "clock_in")
 			if err != nil {
@@ -201,6 +239,15 @@ func RegisterWorkClockAPI(app *pocketbase.PocketBase) {
 			return callSucceeded(e)
 		})
 
+		// Handler: POST /api/work_clock/add_clock_in_out_pair
+		// Purpose: Adds a manual clock-in and clock-out record pair with specified timestamps.
+		// Parameters:
+		//   - clock_in_timestamp (string)  Required: RFC3339 formatted timestamp for clock in.
+		//   - clock_out_timestamp (string) Required: RFC3339 formatted timestamp for clock out.
+		// Responses:
+		//   200 OK    - {"success":true}
+		//   400 Bad Request - Missing/invalid parameters.
+		//   500 Internal Server Error - On operation failure.
 		se.Router.POST("/api/work_clock/add_clock_in_out_pair", func(e *core.RequestEvent) error {
 			clockInTimestamp, err := parseTimeParam(e.Request.FormValue("clock_in_timestamp"), "clock_in_timestamp")
 			if err != nil {
