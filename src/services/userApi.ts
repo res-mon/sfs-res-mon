@@ -1,3 +1,5 @@
+import { createSignal } from "solid-js";
+
 import { ClientResponseError } from "pocketbase";
 
 import { Effect, pipe } from "effect";
@@ -5,11 +7,29 @@ import { Effect, pipe } from "effect";
 import pb, { ResponseError } from "./pocketBase/pocketBase";
 
 /**
- * Checks whether a user is currently authenticated in PocketBase.
+ * Reactive signal tracking the current authenticated status.
+ * Initialized with PocketBase authStore validity and updated on store changes.
+ */
+const [getAuthenticated, setAuthenticated] = createSignal(pb.authStore.isValid);
+
+// Subscribe to PocketBase authStore changes to keep signal in sync
+pb.authStore.onChange(() => {
+  setAuthenticated(pb.authStore.isValid);
+});
+
+/**
+ * Returns whether the user is currently authenticated.
+ * Reads from the reactive signal that reflects PocketBase authStore validity.
  * @returns {boolean} true if a valid auth token is present, false otherwise.
  */
 export function isAuthenticated(): boolean {
-  return pb.authStore.isValid;
+  const current = getAuthenticated();
+  const actual = pb.authStore.isValid;
+  if (current === actual) {
+    return current;
+  }
+  setAuthenticated(actual);
+  return actual;
 }
 
 /**
