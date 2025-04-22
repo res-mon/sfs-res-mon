@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/pocketbase/dbx v1.11.0
-	github.com/pocketbase/pocketbase v0.27.0
+	github.com/pocketbase/pocketbase v0.27.1
 	modernc.org/sqlite v1.37.0
 )
 
