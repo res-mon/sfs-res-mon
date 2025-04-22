@@ -274,7 +274,7 @@ const Layout = (props: RouteSectionProps): JSX.Element => {
             end={true}
           >
             <span class="xs:inline hidden">Resource Monitor</span>
-            <span class="xs:hidden">SFS</span>
+            <span class="xs:hidden">ResMon</span>
           </A>
         </div>
 
