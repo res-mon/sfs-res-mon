@@ -273,7 +273,7 @@ const Layout = (props: RouteSectionProps): JSX.Element => {
             activeClass="text-primary"
             end={true}
           >
-            <span class="xs:inline hidden">Simple Frontend Stack</span>
+            <span class="xs:inline hidden">Resource Monitor</span>
             <span class="xs:hidden">SFS</span>
           </A>
         </div>
